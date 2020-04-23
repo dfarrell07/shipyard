@@ -8,9 +8,7 @@ source ${SCRIPTS_DIR}/lib/utils
 ### Functions ###
 
 function delete_cluster() {
-    if kind get clusters | grep -q ${cluster}; then
-        kind delete cluster --name=${cluster};
-    fi
+    kind delete cluster --name=${cluster};
 }
 
 function stop_local_registry {
@@ -23,7 +21,11 @@ function stop_local_registry {
 
 ### Main ###
 
-run_parallel "{1..3}" delete_cluster
+n=$(kind get clusters | wc -l)
+if [ ${n} -gt 0 ]; then
+    run_parallel "{1..${n}}" delete_cluster
+fi
+
 stop_local_registry
 docker system prune --volumes -f
 

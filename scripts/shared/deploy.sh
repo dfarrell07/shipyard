@@ -19,8 +19,9 @@ deploytool_broker_args="${FLAGS_deploytool_broker_args}"
 deploytool_submariner_args="${FLAGS_deploytool_submariner_args}"
 cluster_settings="${FLAGS_cluster_settings}"
 cable_driver="${FLAGS_cable_driver}"
+num_clusters=$(kind get clusters | wc -l)
 
-echo "Running with: globalnet=${globalnet@Q}, deploytool=${deploytool@Q}, deploytool_broker_args=${deploytool_broker_args@Q}, deploytool_submariner_args=${deploytool_submariner_args@Q}, cluster_settings=${cluster_settings@Q}, cable_driver=${cable_driver@Q}"
+echo "Running with: globalnet=${globalnet@Q}, deploytool=${deploytool@Q}, deploytool_broker_args=${deploytool_broker_args@Q}, deploytool_submariner_args=${deploytool_submariner_args@Q}, num_clusters=${num_clusters}, cluster_settings=${cluster_settings@Q}, cable_driver=${cable_driver@Q}"
 
 set -em
 
@@ -31,11 +32,19 @@ source ${SCRIPTS_DIR}/lib/deploy_funcs
 
 # Always source the shared cluster settings, to set defaults in case something wasn't set in the provided settings
 source "${SCRIPTS_DIR}/lib/cluster_settings"
+
+if [ ${num_clusters} -gt 3 ]; then
+    for i in $(eval echo "{4..${num_clusters}}"); do
+        cluster_nodes[$i]="control-plane worker"
+        cluster_subm[$i]="true"
+    done
+fi
+
 [[ -z "${cluster_settings}" ]] || source ${cluster_settings}
 
 ### Main ###
 
-declare_cidrs
+declare_cidrs ${num_clusters}
 declare_kubeconfig
 
 import_image quay.io/submariner/submariner
@@ -45,7 +54,7 @@ import_image quay.io/submariner/submariner-route-agent
 load_deploytool $deploytool
 deploytool_prereqs
 
-run_parallel "{1..3}" prepare_cluster "$SUBM_NS"
+run_parallel "{1..${num_clusters}}" prepare_cluster "$SUBM_NS"
 
 with_context cluster1 setup_broker
 install_subm_all_clusters

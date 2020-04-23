@@ -7,6 +7,7 @@ DEFINE_string 'k8s_version' '' 'Version of K8s to use'
 DEFINE_string 'globalnet' 'false' "Deploy with operlapping CIDRs (set to 'true' to enable)"
 DEFINE_string 'registry_inmemory' 'true' "Run local registry in memory to speed up the image loading."
 DEFINE_string 'cluster_settings' '' "Settings file to customize cluster deployments"
+DEFINE_integer "num_clusters" "3" "The number of clusters to create (1 to 3)" "n"
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
 
@@ -14,7 +15,14 @@ version="${FLAGS_k8s_version}"
 globalnet="${FLAGS_globalnet}"
 registry_inmemory="${FLAGS_registry_inmemory}"
 cluster_settings="${FLAGS_cluster_settings}"
-echo "Running with: k8s_version=${version}, globalnet=${globalnet}, registry_inmemory=${registry_inmemory}, cluster_settings=${cluster_settings}"
+num_clusters="${FLAGS_num_clusters}"
+
+if [ ${num_clusters} -lt 1 ]; then
+    echo "num_clusters must be greater than 1"
+    exit 1
+fi
+
+echo "Running with: k8s_version=${version}, globalnet=${globalnet}, registry_inmemory=${registry_inmemory}, num_clusters=${num_clusters}, cluster_settings=${cluster_settings}"
 
 set -em
 
@@ -23,6 +31,14 @@ source ${SCRIPTS_DIR}/lib/utils
 
 # Always source the shared cluster settings, to set defaults in case something wasn't set in the provided settings
 source "${SCRIPTS_DIR}/lib/cluster_settings"
+
+if [ ${num_clusters} -gt 3 ]; then
+    for i in $(eval echo "{4..${num_clusters}}"); do
+        cluster_nodes[$i]="control-plane worker"
+        cluster_subm[$i]="true"
+    done
+fi
+
 [[ -z "${cluster_settings}" ]] || source ${cluster_settings}
 
 ### Functions ###
@@ -113,8 +129,12 @@ rm -rf ${KUBECONFIGS_DIR}
 mkdir -p ${KUBECONFIGS_DIR}
 
 run_local_registry
-declare_cidrs
-with_retries 3 run_parallel "{1..3}" create_kind_cluster
+declare_cidrs ${num_clusters}
+with_retries 3 run_parallel "{1..${num_clusters}}" create_kind_cluster
 declare_kubeconfig
-run_parallel "2 3" deploy_weave_cni
 
+if [ ${num_clusters} -gt 1 ]; then
+    run_parallel "{2..${num_clusters}}" deploy_weave_cni
+fi
+
+print_clusters_message
