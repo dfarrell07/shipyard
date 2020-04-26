@@ -5,6 +5,7 @@ ifneq (,$(DAPPER_HOST_ARCH))
 CLUSTER_SETTINGS_FLAG = --cluster_settings $(DAPPER_SOURCE)/scripts/cluster_settings
 CLUSTERS_ARGS += $(CLUSTER_SETTINGS_FLAG)
 DEPLOY_ARGS += $(CLUSTER_SETTINGS_FLAG)
+E2E_ARGS += $(CLUSTER_SETTINGS_FLAG)
 
 include $(SHIPYARD_DIR)/Makefile.inc
 
@@ -17,14 +18,14 @@ $(TARGETS):
 .PHONY: $(TARGETS)
 
 # Project-specific targets go here
-validate: vendor/modules.txt
+e2e validate: vendor/modules.txt
 
 else
 
 # Not running in Dapper
 
 # Shipyard-specific starts
-clusters deploy release validate: dapper-image
+clusters deploy e2e release validate: dapper-image
 
 dapper-image: export SCRIPTS_DIR=./scripts/shared
 
