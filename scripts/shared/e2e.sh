@@ -11,8 +11,7 @@ eval set -- "${FLAGS_ARGV}"
 focus="${FLAGS_focus}"
 cluster_settings="${FLAGS_cluster_settings}"
 
-set -o pipefail 
-set -em
+set -em -o pipefail
 
 source ${SCRIPTS_DIR}/lib/debug_functions
 source ${SCRIPTS_DIR}/lib/utils
