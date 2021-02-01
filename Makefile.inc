@@ -60,7 +60,7 @@ deploy-latest:
 gitlint:
 	gitlint --commits origin/master..HEAD
 
-golangci-lint: vendor/modules.txt
+golangci-lint:
 	golangci-lint linters
 	golangci-lint run --timeout 10m
 
