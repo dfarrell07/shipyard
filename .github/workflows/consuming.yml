@@ -19,6 +19,8 @@ jobs:
         project: ['admiral', 'submariner', 'submariner-operator', 'lighthouse']
         deploytool: ['operator', 'helm']
         cabledriver: ['libreswan']
+        # DEBUG
+        lighthouse: ['']
         exclude:
           # Admiral E2E doesn't respect deploy-tool params, as it uses clusters without Submariner
           - project: admiral
@@ -31,6 +33,11 @@ jobs:
           - project: submariner
             cabledriver: wireguard
             deploytool: operator
+          # DEBUG
+          - project: submariner-operator
+            cabledriver: libreswan
+            deploytool: operator
+            lighthouse: lighthouse
     steps:
       - name: Check out the Shipyard repository
         uses: actions/checkout@v2
