@@ -24,6 +24,12 @@ function print_pods_logs() {
 }
 
 function post_analyze() {
+    Print_section "* Output of 'subctl show all' in $cluster *"
+    subctl show all
+
+    print_section "* Submariner CR for $cluster *"
+		kubectl get submariner submariner --all-namespaces -o json
+
     print_section "* Overview of all resources in $cluster *"
     kubectl api-resources --verbs=list -o name | xargs -n 1 kubectl get --show-kind -o wide --ignore-not-found
 
@@ -36,14 +42,11 @@ function post_analyze() {
         kubectl -n $ns logs $name
     done
 
-    print_section "* Kube-proxy pod logs for $cluster *"
-    print_pods_logs "kube-system" "k8s-app=kube-proxy"
-
     print_section "* Submariner-operator pod logs for $cluster *"
     print_pods_logs "submariner-operator"
 
-    print_section "* Output of 'subctl show all' in $cluster *"
-    subctl show all
+    print_section "* Kube-proxy pod logs for $cluster *"
+    print_pods_logs "kube-system" "k8s-app=kube-proxy"
 
     return 0
 }
