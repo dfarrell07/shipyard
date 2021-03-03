@@ -80,7 +80,6 @@ jobs:
         run: make e2e using="${{ matrix.ovn }}"
 
       - name: Post mortem
-        if: failure()
         uses: ./gh-actions/post-mortem
 
   post_mortem:
