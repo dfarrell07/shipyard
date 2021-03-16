@@ -17,6 +17,14 @@ runs:
         free -h
         echo "::endgroup::"
 
+    - name: Increase inotify file and file descriptor limits
+      shell: bash
+      run: |
+        echo "::group::Increase inotify file and file descriptor limits"
+        sudo sysctl fs.inotify.max_user_watches=524288
+        sudo sysctl fs.inotify.max_user_instances=512
+        echo "::endgroup::"
+
     - shell: bash
       run: |
         make upgrade-e2e

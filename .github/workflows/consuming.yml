@@ -36,6 +36,12 @@ jobs:
       - name: Check out the Shipyard repository
         uses: actions/checkout@v2
 
+      - name: Increase inotify file and file descriptor limits
+        shell: bash
+        run: |
+          sudo sysctl fs.inotify.max_user_watches=524288
+          sudo sysctl fs.inotify.max_user_instances=512
+
       - name: Build the latest Shipyard image
         run: make images
 
