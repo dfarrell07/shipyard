@@ -19,7 +19,6 @@ jobs:
         project: ['admiral', 'submariner', 'submariner-operator', 'lighthouse']
         deploytool: ['operator', 'helm']
         cabledriver: ['libreswan']
-        k8s_version: ['1.17.17']
         exclude:
           # Admiral E2E doesn't respect deploy-tool params, as it uses clusters without Submariner
           - project: admiral
@@ -32,9 +31,6 @@ jobs:
           - project: submariner
             cabledriver: wireguard
             deploytool: operator
-          # Test multiple K8s versions only in submariner-operator (for now)
-          - project: submariner-operator
-            k8s_version: 1.18.0
     steps:
       - name: Check out the Shipyard repository
         uses: actions/checkout@v2
@@ -58,7 +54,6 @@ jobs:
       - name: Run E2E deployment and tests
         uses: ./gh-actions/e2e
         with:
-          k8s_version: ${{ matrix.k8s_version }}
           using: ${{ matrix.cabledriver }} ${{ matrix.deploytool }}
           working-directory: ./${{ matrix.project }}
 
