@@ -22,11 +22,11 @@ require (
 	sigs.k8s.io/mcs-api v0.0.0-20200908023942-d26176718973
 )
 
-// Pinned to kubernetes-1.17.0
+// Pinned to kubernetes-1.22.2
 replace (
-	k8s.io/api => k8s.io/api v0.17.0
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.17.0
-	k8s.io/client-go => k8s.io/client-go v0.17.0
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.17.0
+	k8s.io/api => k8s.io/api v0.22.2
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.22.2
+	k8s.io/apimachinery => k8s.io/apimachinery v0.22.2
+	k8s.io/client-go => k8s.io/client-go v0.22.2
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.22.2
 )
