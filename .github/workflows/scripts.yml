@@ -5,6 +5,16 @@ on:
   pull_request:
 
 jobs:
+  clean:
+    name: Clean
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+
+      - name: Test the cleanup.sh script and and clean make target
+        run: make clean
+
   clusters:
     name: Clusters
     timeout-minutes: 20
