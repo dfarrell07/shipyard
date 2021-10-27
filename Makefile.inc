@@ -91,8 +91,8 @@ cleanup: clean-clusters
 
 # [clean-buildx] removes the buildx builder, if any
 clean-buildx:
-	docker buildx version > /dev/null 2>&1 && \
-	docker buildx use buildx_builder > /dev/null 2>&1 && \
+	docker buildx version && \
+	docker buildx use buildx_builder && \
 	docker buildx rm
 
 # [clusters] creates KIND clusters that can then be used to deploy Submariner
