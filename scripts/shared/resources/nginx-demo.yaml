@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: nginx-demo
-          image: quay.io/testing-farm/nginx:latest
+          image: quay.io/openshifttest/nginx-alpine:latest
           ports:
             - containerPort: 80
 ---
