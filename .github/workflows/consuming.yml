@@ -21,7 +21,7 @@ jobs:
         project: ['admiral', 'lighthouse', 'subctl', 'submariner', 'submariner-operator']
         deploytool: ['operator', 'helm']
         cabledriver: ['libreswan']
-        k8s_version: ['1.24']
+        k8s_version: ['1.25']
         exclude:
           # Admiral E2E doesn't respect deploy-tool params, as it uses clusters without Submariner
           - project: admiral
