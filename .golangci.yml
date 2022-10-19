@@ -27,7 +27,6 @@ linters:
     - bodyclose
     - contextcheck
     # - cyclop # This is equivalent to gocyclo
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -90,7 +89,6 @@ linters:
     # - scopelint # Deprecated since v1.39.0
     # - sqlclosecheck # We don't use SQL
     - staticcheck
-    - structcheck
     - stylecheck
     # - tagliatelle # Inconsistent with stylecheck and not as good
     # - tenv # Not relevant for our Ginkgo UTs
@@ -101,7 +99,6 @@ linters:
     - unconvert
     - unparam
     - unused
-    - varcheck
     # - varnamelen # It doesn't seem necessary to enforce a minimum variable name length
     - wastedassign
     - whitespace
@@ -142,3 +139,21 @@ issues:
         - gochecknoinits
         - goerr113
         - wrapcheck
+
+    # Ignore complaints about the URL to the Apache license
+    - path: test/e2e/e2e_test.go
+      linters:
+        - gci
+      text: "File is not `gci`-ed with --skip-generated -s standard,default"
+    - path: test/e2e/e2e_test.go
+      linters:
+        - gofmt
+      text: "File is not `gofmt`-ed with `-s`"
+    - path: test/e2e/e2e_test.go
+      linters:
+        - gofumpt
+      text: "File is not `gofumpt`-ed"
+    - path: test/e2e/e2e_test.go
+      linters:
+        - goimports
+      text: "File is not `goimports`-ed"
