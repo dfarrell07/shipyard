@@ -148,6 +148,7 @@ override PRELOAD_IMAGES += submariner-globalnet
 endif
 ifneq (,$(shell grep -w ovn $(SETTINGS)))
 override PRELOAD_IMAGES += submariner-networkplugin-syncer
+# TODO Peload OVN IC image for air-gapped
 endif
 ifeq ($(LIGHTHOUSE),true)
 override PRELOAD_IMAGES += lighthouse-agent lighthouse-coredns
