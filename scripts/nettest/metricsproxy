@@ -1,4 +1,9 @@
 #!/bin/sh
 
 # Arguments: source-port target-IP target-port
-exec /usr/sbin/busybox nc -v -lk -p "$1" -e /usr/sbin/busybox nc "$2" "$3"
+
+if [ -x /usr/sbin/busybox ]; then
+    exec /usr/sbin/busybox nc -v -lk -p "$1" -e /usr/sbin/busybox nc "$2" "$3"
+else
+    exec nc -v -lk -p "$1" -e nc "$2" "$3"
+fi
