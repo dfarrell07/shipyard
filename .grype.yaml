@@ -9,3 +9,5 @@ ignore:
 exclude:
   # Exclude git-ignored ovn-kubernetes directory
   - "./ovn-kubernetes/**"
+  # Exclude Claude Code worktrees (temporary agent workspaces, not project code)
+  - "./.claude/worktrees/**"
