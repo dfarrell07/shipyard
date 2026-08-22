@@ -55,7 +55,6 @@ RUN mkdir -p /go/bin /go/pkg /go/src && \
                    gh \
                    git-core \
                    gitlint \
-                   golang \
                    helm3 \
                    jq \
                    kubernetes-client \
@@ -78,7 +77,8 @@ RUN mkdir -p /go/bin /go/pkg /go/src && \
     dnf -y clean all && \
     rm -f /usr/bin/{dockerd,lto-dump} \
           /usr/libexec/gcc/x86_64-redhat-linux/*/lto1 && \
-    if test ${UPX_LEVEL} != -0; then find /usr/bin /usr/lib/golang /usr/libexec -type f -executable -newercm /go -size +1M ! -name hyperkube \( -execdir upx ${UPX_LEVEL} {} \; -o -true \); fi && \
+    curl -fsSL "https://go.dev/dl/go1.25.13.linux-${DAPPER_HOST_ARCH}.tar.gz" | tar -C /usr/local -xz && \
+    if test ${UPX_LEVEL} != -0; then find /usr/bin /usr/local/go /usr/libexec -type f -executable -newercm /go -size +1M ! -name hyperkube \( -execdir upx ${UPX_LEVEL} {} \; -o -true \); fi && \
     ln -f /usr/bin/kubectl /usr/bin/hyperkube && \
     ln -f /usr/bin/helm3 /usr/bin/helm
 
