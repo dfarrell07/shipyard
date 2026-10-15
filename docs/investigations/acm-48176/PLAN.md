@@ -2,22 +2,11 @@
 
 ## The Lighthouse change
 
-In `test/e2e/framework/deployments.go`, `NewNginxDeployment` and `NewNetShootDeploymentInNS` call a new private helper,
-`nettestRunAsUser`, before building the Deployment, and use its result as the pod's `runAsUser`. `NewNetShootDeployment`
-delegates to `NewNetShootDeploymentInNS`. The helper:
-
-1. GETs `/apis` with `Accept: application/json` through the target cluster's discovery REST client, inside
-   `framework.AwaitUntil`. Like the rest of the file, it retries transient errors within the operation timeout.
-2. Requires a `*metav1.APIGroupList`. Any other error fails the test before a Deployment is created.
-3. Returns `nil` if a group named `security.openshift.io` is listed, otherwise 10000.
-
-It uses the raw request rather than `Discovery().ServerGroups()` because only the raw request honors a context deadline. The
-lookup runs per call and per target cluster, with no cache. Discovery only identifies the platform; the OpenShift path assumes
-the default restricted-v2 grant and namespace UID allocation.
-
-Each branch has one commit, "Let OpenShift assign nettest helper pod UIDs", pushed to
-[`dfarrell07/lighthouse`](https://github.com/dfarrell07/lighthouse/branches) as `nettest-scc-uid-<branch>`. The code follows each
-branch's framework API:
+`NewNginxDeployment` and `NewNetShootDeploymentInNS` in `test/e2e/framework/deployments.go` get their pod `runAsUser` from a new
+private helper, `nettestRunAsUser`, as the [README](README.md#fix) describes. It GETs `/apis` inside `framework.AwaitUntil`; it
+uses the raw request because `Discovery().ServerGroups()` ignores context deadlines. Each branch has one commit, "Let OpenShift
+assign nettest helper pod UIDs", pushed to [`dfarrell07/lighthouse`](https://github.com/dfarrell07/lighthouse/branches) as
+`nettest-scc-uid-<branch>` and adapted to that branch's framework API:
 
 | Branches | Variant |
 | --- | --- |
@@ -26,11 +15,9 @@ branch's framework API:
 | `release-0.19`–`release-0.21` | As above, with the pre-generics `AwaitUntil` and a type assertion |
 | `release-0.18` | As above, computing the timeout itself; Shipyard v0.18.5 lacks `OperationTimeoutToDuration()` |
 
-On `devel` and `release-0.23`–`0.25`, the commit adds a Ginkgo suite in `test/unit/framework`, because the shared unit runner
-skips `test/e2e`. An HTTP fixture serves discovery, records created Deployments, and reports a Running pod so the builder's wait
-completes. For each builder, one spec checks that the UID is unset on the OpenShift cluster and 10000 on the other. One more
-checks that a discovery failure stops the test before any Deployment is created. Retries and timeouts come from Shipyard's
-`AwaitUntil` and client-go, so the suite does not re-test them.
+On `devel` and `release-0.23`–`0.25`, the commit adds a three-spec Ginkgo suite in `test/unit/framework`, outside the `test/e2e`
+tree that the unit runner skips. It checks both builders' UID on an OpenShift and a plain fake cluster, and that a discovery
+failure stops the test before any Deployment is created.
 
 ## Verification
 
@@ -106,6 +93,3 @@ for b in devel release-0.25 release-0.24 release-0.23 release-0.22 release-0.21 
       --title "Let OpenShift assign nettest helper pod UIDs" --body-file "$body" --assignee "@me" || break
 done
 ~~~
-
-After the PRs merge, remove each worktree with
-`git -C ~/go/src/submariner-io/lighthouse worktree remove ~/go/src/submariner-io/.worktrees/acm-48176-exec/<branch>`.
