@@ -1,7 +1,7 @@
 # ACM-48176: nettest helper pods rejected on OpenShift
 
-**Status:** diagnosed offline; fix pushed to `dfarrell07/lighthouse` as `nettest-scc-uid-<branch>` for all nine branches, PRs not
-opened.
+**Status:** diagnosed offline; draft Lighthouse PRs [#2324](https://github.com/submariner-io/lighthouse/pull/2324)–[#2332](https://github.com/submariner-io/lighthouse/pull/2332)
+are open for all nine branches.
 ACM-48194 is a duplicate.
 
 ## What fails
@@ -49,7 +49,7 @@ The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No 
 
 ## Next steps
 
-1. **Developer** opens the nine Lighthouse PRs together and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
+1. **Developer** marks the nine draft PRs ready and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
 2. **Release owners** ship the fix in 0.23.5, and hold downstream 0.22.2 and 0.24.2 until they include it ([delivery](PLAN.md#delivering-subctl)).
 3. **QE** reruns its usual Submariner job with the rebuilt Subctl. All 14 cases should pass; that confirms the fix.
 4. **Developer** adds a known-issue note to the affected upstream Subctl releases.

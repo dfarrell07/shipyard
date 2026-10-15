@@ -34,7 +34,7 @@ admission check admits.
 
 ## Landing
 
-The commits are per-branch ports, not cherry-picks of a merged `devel` commit, so open all nine PRs together and link them.
+The commits are per-branch ports, not cherry-picks of a merged `devel` commit, so all nine PRs are open together and linked.
 The original hardening went the same way (#2228–#2235). Merge `release-0.23`, `release-0.22`, and `release-0.24` first: their
 downstream releases are waiting on this fix. If review changes the code, apply the change to each variant.
 
@@ -69,27 +69,17 @@ QE should take Subctl from the rebuilt stage image by digest; `go version -m` on
   unaffected."
 - **Shipyard #2618:** it still sets UID 10000 in `devel`'s CI YAMLs. It is unrelated to `subctl verify`; merge it separately.
 
-## Publishing commands (developer)
+## Pull requests
 
-The branches are already pushed to `dfarrell_lh`; the loop's push only matters if a commit changes. The loop uses the
-[shared PR body](evidence/pr-body.txt), replaces its test line on `release-0.18`–`0.22` with a pointer to the `devel` PR, and
-stops at the first failure.
+All drafts, each from `dfarrell07:nettest-scc-uid-<branch>`:
 
-~~~bash
-ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence
-session=https://claude.ai/code/session_01YTdbc3vVeY8XMVvhVmqgWD
-for b in devel release-0.25 release-0.24 release-0.23 release-0.22 release-0.21 release-0.20 release-0.19 release-0.18; do
-  cd ~/go/src/submariner-io/.worktrees/acm-48176-exec/$b || break
-  body=$(mktemp)
-  cp "$ev/pr-body.txt" "$body"
-  case $b in
-  release-0.1[89] | release-0.2[012])
-    sed -i 's|^Tests are in .*|This branch has the code change only; its unit runner cannot run the tests, which are in the `devel` PR.|' "$body"
-    ;;
-  esac
-  printf '\n%s\n' "$session" >> "$body"
-  git push dfarrell_lh "nettest-scc-uid-$b" &&
-    gh pr create --repo submariner-io/lighthouse --base "$b" --head "dfarrell07:nettest-scc-uid-$b" \
-      --title "Let OpenShift assign nettest helper pod UIDs" --body-file "$body" --assignee "@me" || break
-done
-~~~
+| Branch | PR | Branch | PR |
+| --- | --- | --- | --- |
+| `devel` | [#2324](https://github.com/submariner-io/lighthouse/pull/2324) | `release-0.21` | [#2329](https://github.com/submariner-io/lighthouse/pull/2329) |
+| `release-0.25` | [#2325](https://github.com/submariner-io/lighthouse/pull/2325) | `release-0.20` | [#2330](https://github.com/submariner-io/lighthouse/pull/2330) |
+| `release-0.24` | [#2326](https://github.com/submariner-io/lighthouse/pull/2326) | `release-0.19` | [#2331](https://github.com/submariner-io/lighthouse/pull/2331) |
+| `release-0.23` | [#2327](https://github.com/submariner-io/lighthouse/pull/2327) | `release-0.18` | [#2332](https://github.com/submariner-io/lighthouse/pull/2332) |
+| `release-0.22` | [#2328](https://github.com/submariner-io/lighthouse/pull/2328) | | |
+
+Their bodies start from [pr-body.txt](evidence/pr-body.txt). The 0.18–0.22 bodies point to #2324 for the tests, and every
+body lists the others.
