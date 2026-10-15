@@ -1,0 +1,22 @@
+package main
+
+import (
+    "fmt"
+    "os"
+
+    "k8s.io/apimachinery/pkg/runtime/serializer"
+    "k8s.io/client-go/kubernetes/scheme"
+)
+
+func main() {
+    decoder := serializer.NewCodecFactory(scheme.Scheme, serializer.EnableStrict).UniversalDeserializer()
+    cases := []struct {name, body string; rejected bool}{
+        {"internal-style field in external YAML", `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"check"},"spec":{"securityContext":{"hostUsers":false},"containers":[{"name":"test","image":"example.invalid/test"}]}}`, true},
+        {"external PodSpec field", `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"check"},"spec":{"hostUsers":false,"containers":[{"name":"test","image":"example.invalid/test"}]}}`, false},
+    }
+    for _, c := range cases {
+        _, _, err := decoder.Decode([]byte(c.body), nil, nil)
+        fmt.Printf("%s: %v\n", c.name, err)
+        if (err != nil) != c.rejected { os.Exit(1) }
+    }
+}

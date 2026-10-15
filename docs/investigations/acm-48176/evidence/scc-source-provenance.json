@@ -1,0 +1,34 @@
+{
+  "revision": "f0d44ef6e53b49bd864c035752191a85b293af14",
+  "branch_at_inspection": "release-4.20",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/openshift/apiserver-library-go/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/sccadmission/admission.go",
+      "sha256": "2c89113c64d68e5db39d5ea98ae8becda140d70f93944a3892a84dc20601cf85"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/apiserver-library-go/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/sccadmission/scc_authz_check.go",
+      "sha256": "0fbefc2ce39e71c3b0aecb04240a45617a08c3beeb026e8c0696c28548201e93"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/apiserver-library-go/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/sccmatching/provider.go",
+      "sha256": "32586ba49e532783884599c36be3365efedd3f448eb169d4a963991073c69388"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/apiserver-library-go/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/user/mustrunasrange.go",
+      "sha256": "3f9079f559525931f7c81ed1881c19eef01bd524a5cad9daa31ad49d70ff2c29"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.33.2/pkg/apis/core/types.go",
+      "sha256": "bd4a5b2249136822f778e5cd4373943112cf009ef62953b4e7a84213451271c2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.33.2/pkg/apis/core/v1/conversion.go",
+      "sha256": "1d6fc30304b436135a0f926ed81e8cd0e333bdcc79837c29b7ed9b71e9c50d5c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/apiserver-library-go/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/sccmatching/matcher.go",
+      "sha256": "2f25c4caa5f45a5a58101210e29c9efbf56fb675de45232395102d65baad21c8"
+    }
+  ]
+}

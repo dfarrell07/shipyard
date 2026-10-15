@@ -1,21 +1,22 @@
 # ACM-48176: nettest hardening regression investigation
 
-Investigated 2026-10-15. Shipyard checkout: `ebd5c514` (devel).
-Lighthouse fix worktree: `fix/acm-48176-scc`, based on `origin/release-0.23` at `3871dff3`.
-Shipyard 0.23 fix worktree: `fix/acm-48176-iperf`, based on `origin/release-0.23` at `380d703f`.
+Investigated 2026-10-15. Shipyard checkout: `ebd5c514` (devel). Lighthouse fix worktree: `fix/acm-48176-scc`, based on `origin/release-0.23`
+at `3871dff3`. Shipyard 0.23 fix worktree: `fix/acm-48176-iperf`, based on `origin/release-0.23` at `380d703f`.
 
 ## Findings and confidence
 
 1. **Strong candidate for ACM-48176: Lighthouse still forces UID 10000 in controller-created test pods.** Both `NewNginxDeployment` and
-   `NewNetShootDeploymentInNS` set `PodSecurityContext.RunAsUser=10000`. This is the same OpenShift admission regression already corrected
-   in Shipyard's helper YAML. The Lighthouse builders do not use that YAML or Shipyard's shared NetworkPod security context. The fix must
-   reach Lighthouse and the binaries embedding it.
-2. **Separately reproduced regression: throughput tests fail with a read-only root and no writable `/tmp`.** Both shipped RHEL iperf3 3.9
-   and community Fedora iperf3 3.22 need temporary stream-buffer files. The Shipyard hardening added read-only roots but omitted scratch
-   mounts on both throughput pod types. Fixing just one endpoint is insufficient.
-3. **The image's non-root default and HTTP server work in the tested images.** Both images run `simpleserver`, respond `Hello World`, and
-   execute `dig` under UID 1000780000 with a read-only root, capability drop ALL, and no privilege escalation. These checks support
-   preserving `USER 10000` in the Dockerfiles and the other pod hardening.
+`NewNetShootDeploymentInNS` set `PodSecurityContext.RunAsUser=10000`. This is the same OpenShift admission regression already corrected
+in Shipyard's helper YAML. The Lighthouse builders do not use that YAML or Shipyard's shared NetworkPod security context. The fix must
+reach Lighthouse and the binaries embedding it. 2. **Separately reproduced regression: throughput tests fail with a read-only root and no
+writable `/tmp`.** Both shipped RHEL iperf3 3.9    and community Fedora iperf3 3.22 need temporary stream-buffer files. The Shipyard
+hardening added read-only roots but omitted scratch    mounts on both throughput pod types. Fixing just one endpoint is insufficient. 3.
+**The image's non-root default and HTTP server work in the tested images.** Both images run `simpleserver`, respond `Hello World`, and
+execute `dig` under UID 1000780000 with a read-only root, capability drop ALL, and no privilege escalation. These checks support
+preserving `USER 10000` in the Dockerfiles and the other pod hardening.
+
+See the [second-pass review](DEEP-REVIEW.md) for pinned admission/conversion sources, all 14 setup paths, and the failure analysis of
+earlier reviews.
 
 The first finding is a source-confirmed admission defect under the normal restricted SCC UID strategy, but attribution of the actual
 reported QE run remains **unconfirmed** without its complete timeout output and pod/controller events. The second finding is independently
@@ -65,7 +66,7 @@ PSA settings do not grant a service account permission to use a privileged SCC; 
 
 The distinction between the builders matters:
 
-- Lighthouse creates Deployments; their controllers subsequently create pods under the workload service account's SCC permissions.
+- Lighthouse creates Deployments; SCC admission for the subsequent pods considers their service account and the controller request identity.
   Successfully creating the Deployment does not prove its pods were admitted. A denied ReplicaSet repeatedly creates no pods, and the
   framework's pod-count poll times out at the generic assertion.
 - Shipyard NetworkPods are created directly by the framework client and already specified UID 10000 before this hardening. Their requesting
@@ -158,6 +159,8 @@ Verification completed:
 - Lighthouse source comparison: **PASS**, exactly two UID removals and no other configuration changes.
 - `git diff --check`: **PASS** for all three working checkouts. Both complete Shipyard patches (including tests) pass reverse-application
   checks against their working trees.
+- Automatic selection caveat: the new framework test was initially run directly, but the shared unit runner prunes its parent subtree. See
+  the second-pass review and follow-up build-target correction.
 - Local image runtime matrix: **10 expected results**, with the eight throughput combinations and two arbitrary-UID HTTP/DNS checks detailed
   above.
 
@@ -167,20 +170,18 @@ metadata but cannot create pods there or read SCC definitions, so no actual Open
 
 Before calling ACM-48176 resolved:
 
-1. Obtain the complete failure output, exact Subctl/Lighthouse versions, test image digest, and target OpenShift version.
-2. Inspect the failing namespace's Deployment/ReplicaSet events and pod status. The predicted signature is a FailedCreate event rejecting
-   UID 10000 under restricted SCCs, followed by a pod-count timeout. A different signature requires revisiting the attribution:
-   Pending/Unschedulable points at scheduling and resource requests; CreateContainerError or CrashLoopBackOff requires the runtime error and
-   container logs; successful setup followed by a dig assertion requires DNS investigation. The generic assertion alone does not distinguish
-   them.
-3. Apply the Lighthouse fix to 0.23, update the dependency in Subctl, and rebuild the verification binary. Re-run the 14 discovery cases on
-   the intended QE clusters, including the StatefulSet and special-namespace netshoot paths.
-4. Independently backport the Shipyard iperf3 scratch fix and update its consumers; exercise both benchmark endpoints and confirm their
-   emitted mounts and security context.
-5. Carry the missing Lighthouse UID correction and throughput scratch correction through the other maintained streams as appropriate. Local
-   remote-ref inspection found the former in devel and release-0.18 through release-0.25, and found read-only roots without throughput
-   mounts in each of those Shipyard refs. Refresh refs before submitting backports. Shipyard's helper UID removal is already present in all
-   those release refs; devel remains open in PR #2618.
+1. Obtain the complete failure output, exact Subctl/Lighthouse versions, test image digest, and target OpenShift version. 2. Inspect the
+failing namespace's Deployment/ReplicaSet events and pod status. The predicted signature is a FailedCreate event rejecting    UID 10000
+under restricted SCCs, followed by a pod-count timeout. A different signature requires revisiting the attribution:    Pending/Unschedulable
+points at scheduling and resource requests; CreateContainerError or CrashLoopBackOff requires the runtime error and    container logs;
+successful setup followed by a dig assertion requires DNS investigation. The generic assertion alone does not distinguish    them. 3. Apply
+the Lighthouse fix to 0.23, update the dependency in Subctl, and rebuild the verification binary. Re-run the 14 discovery cases on    the
+intended QE clusters, including the StatefulSet and special-namespace netshoot paths. 4. Independently backport the Shipyard iperf3 scratch
+fix and update its consumers; exercise both benchmark endpoints and confirm their    emitted mounts and security context. 5. Carry the
+missing Lighthouse UID correction and throughput scratch correction through the other maintained streams as appropriate. Local    remote-ref
+inspection found the former in devel and release-0.18 through release-0.25, and found read-only roots without throughput    mounts in each
+of those Shipyard refs. Refresh refs before submitting backports. Shipyard's helper UID removal is already present in all    those release
+refs; devel remains open in PR #2618.
 
 This investigation and the Shipyard changes are maintained on `investigate/acm-48176-nettest` in the author’s Shipyard fork. The Lighthouse
 and Shipyard 0.23 changes are included as portable patches. No PR, Jira comment, image publication, or cluster workload has been submitted.
