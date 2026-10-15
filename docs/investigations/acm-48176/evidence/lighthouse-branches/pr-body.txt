@@ -6,10 +6,11 @@ create pods directly and admission uses the admin's own SCC access.
 This leaves `runAsUser` unset when the target cluster serves the `security.openshift.io` API group, so SCC admission assigns a
 UID from the namespace range. Elsewhere UID 10000 is kept: older nettest images default to root and would otherwise fail
 `runAsNonRoot`. Subctl derives the nettest image from the deployed Submariner version, so this combination happens. The lookup
-is per target cluster, bounded by the operation timeout, and fails the test rather than guessing if discovery fails. All other
-hardening is unchanged.
+is per target cluster and goes through `AwaitUntil`, so it retries transient errors within the operation timeout and otherwise
+fails the test rather than guessing. It uses a raw `/apis` request because `ServerGroups()` ignores context deadlines. All
+other hardening is unchanged.
 
-The new Ginkgo suite in `test/unit/framework` covers both platforms, per-cluster selection, discovery errors, invalid responses,
-and the timeout. It lives outside `test/e2e`, which the unit runner skips.
+The new Ginkgo suite in `test/unit/framework` covers both platforms, per-cluster selection, a transient retry, discovery errors,
+invalid responses, and the timeout. It lives outside `test/e2e`, which the unit runner skips.
 
 https://claude.ai/code/session_01YTdbc3vVeY8XMVvhVmqgWD

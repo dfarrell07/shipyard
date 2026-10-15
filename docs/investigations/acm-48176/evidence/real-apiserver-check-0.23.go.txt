@@ -1,0 +1,65 @@
+package framework
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	. "github.com/onsi/gomega"
+	sy "github.com/submariner-io/shipyard/test/e2e/framework"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/utils/ptr"
+)
+
+// One-off check of nettestRunAsUser against a real kube-apiserver; not for commit.
+func TestNettestRunAsUserRealAPIServer(t *testing.T) {
+	RegisterTestingT(t)
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("ADMIN_KUBECONFIG"))
+	Expect(err).NotTo(HaveOccurred())
+	userCfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("USER_KUBECONFIG"))
+	Expect(err).NotTo(HaveOccurred())
+
+	// Discovery as an unprivileged authenticated user, as on a cluster with default RBAC.
+	client := kubernetes.NewForConfigOrDie(userCfg)
+	sy.KubeClients = []*kubernetes.Clientset{client}
+	sy.TestContext.OperationTimeout = 10
+	ctx := context.Background()
+
+	uid := nettestRunAsUser(sy.ClusterA)
+	t.Logf("plain kube-apiserver: runAsUser=%v", *uid)
+	Expect(uid).To(HaveValue(Equal(int64(10000))))
+
+	crd := &apiextv1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{Name: "securitycontextconstraints.security.openshift.io"},
+		Spec: apiextv1.CustomResourceDefinitionSpec{
+			Group: "security.openshift.io", Scope: apiextv1.ClusterScoped,
+			Names: apiextv1.CustomResourceDefinitionNames{Plural: "securitycontextconstraints", Singular: "securitycontextconstraint",
+				Kind: "SecurityContextConstraints", ListKind: "SecurityContextConstraintsList"},
+			Versions: []apiextv1.CustomResourceDefinitionVersion{{Name: "v1", Served: true, Storage: true,
+				Schema: &apiextv1.CustomResourceValidation{OpenAPIV3Schema: &apiextv1.JSONSchemaProps{Type: "object",
+					XPreserveUnknownFields: ptr.To(true)}}}},
+		},
+	}
+	_, err = apiextclient.NewForConfigOrDie(cfg).ApiextensionsV1().CustomResourceDefinitions().Create(ctx, crd, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	Expect(wait.PollUntilContextTimeout(ctx, 200_000_000, 20_000_000_000, true, func(context.Context) (bool, error) {
+		return nettestRunAsUser(sy.ClusterA) == nil, nil
+	})).To(Succeed())
+	t.Logf("kube-apiserver serving security.openshift.io: runAsUser=nil")
+
+	sy.TestContext.OperationTimeout = 0
+	failures := InterceptGomegaFailures(func() {
+		defer func() { _ = recover() }() // intercepted failures do not abort, so the nil list dereference follows
+		nettestRunAsUser(sy.ClusterA)
+	})
+	t.Logf("zero budget failure: %q", failures)
+	Expect(failures).To(ContainElement(ContainSubstring("context deadline exceeded")))
+
+	Expect(apiextclient.NewForConfigOrDie(cfg).ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crd.Name, metav1.DeleteOptions{})).To(Succeed())
+}

@@ -13,32 +13,32 @@ create pods directly, so admission uses the admin's own SCC access.
 Leave runAsUser unset when the target cluster serves the
 security.openshift.io API group, so SCC admission assigns a UID from
 the namespace range. Keep UID 10000 elsewhere: older nettest images
-default to root and would otherwise fail runAsNonRoot. The lookup is
-bounded by the operation timeout and fails the test, rather than
-guessing, if discovery fails.
+default to root and would otherwise fail runAsNonRoot. The lookup
+retries transient errors within the operation timeout and otherwise
+fails the test rather than guessing.
 
 Claude-Session: https://claude.ai/code/session_01YTdbc3vVeY8XMVvhVmqgWD
 Signed-off-by: Daniel Farrell <dfarrell@redhat.com>
 ---
- test/e2e/framework/deployments.go           |  32 ++-
- test/unit/framework/deployments_test.go     | 231 ++++++++++++++++++++
+ test/e2e/framework/deployments.go           |  41 +++-
+ test/unit/framework/deployments_test.go     | 258 ++++++++++++++++++++
  test/unit/framework/framework_suite_test.go |  31 +++
- 3 files changed, 292 insertions(+), 2 deletions(-)
+ 3 files changed, 328 insertions(+), 2 deletions(-)
  create mode 100644 test/unit/framework/deployments_test.go
  create mode 100644 test/unit/framework/framework_suite_test.go
 
 diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.go
-index 479d16db..045ec1f0 100644
+index 479d16db..17f42f53 100644
 --- a/test/e2e/framework/deployments.go
 +++ b/test/e2e/framework/deployments.go
-@@ -21,6 +21,7 @@ package framework
+@@ -20,6 +20,7 @@ package framework
+ 
  import (
  	"context"
++	"fmt"
  
-+	. "github.com/onsi/gomega"
  	"github.com/submariner-io/shipyard/test/e2e/framework"
  	appsv1 "k8s.io/api/apps/v1"
- 	corev1 "k8s.io/api/core/v1"
 @@ -34,6 +35,8 @@ func (f *Framework) NewNetShootDeployment(cluster framework.ClusterIndex) *corev
  }
  
@@ -75,24 +75,33 @@ index 479d16db..045ec1f0 100644
  						SeccompProfile: &corev1.SeccompProfile{
  							Type: corev1.SeccompProfileTypeRuntimeDefault,
  						},
-@@ -170,3 +175,26 @@ func createDeployment(f *Framework, cluster framework.ClusterIndex, deployment *
+@@ -170,3 +175,35 @@ func createDeployment(f *Framework, cluster framework.ClusterIndex, deployment *
  
  	return f.AwaitPodsByAppLabel(cluster, appName, deployment.Namespace, 1)
  }
 +
-+// nettestRunAsUser returns the pod UID for the nettest helper Deployments. OpenShift's SCC admission only accepts
-+// UIDs from the namespace's allocated range and assigns one when none is set, so leave it unset there. Elsewhere,
-+// set a non-root UID explicitly because older nettest images default to root.
++// nettestRunAsUser returns the pod UID for the nettest helper Deployments. OpenShift's default restricted-v2 SCC only
++// admits UIDs from the namespace's allocated range and assigns one when none is set, so leave it unset there. Elsewhere,
++// set a non-root UID explicitly because older nettest images default to root. The raw /apis request, unlike
++// Discovery().ServerGroups(), honors the context's deadline.
 +func nettestRunAsUser(cluster framework.ClusterIndex) *int64 {
 +	ctx, cancel := context.WithTimeout(context.Background(), framework.TestContext.OperationTimeoutToDuration())
 +	defer cancel()
 +
-+	response, err := framework.KubeClients[cluster].Discovery().RESTClient().Get().AbsPath("/apis").
-+		SetHeader("Accept", "application/json").Do(ctx).Get()
-+	Expect(err).NotTo(HaveOccurred(), "discover API groups for nettest UID selection")
++	groups := framework.AwaitUntil("discover API groups for nettest UID selection", func() (*metav1.APIGroupList, error) {
++		response, err := framework.KubeClients[cluster].Discovery().RESTClient().Get().AbsPath("/apis").
++			SetHeader("Accept", "application/json").Do(ctx).Get()
++		if err != nil {
++			return nil, err
++		}
 +
-+	groups, ok := response.(*metav1.APIGroupList)
-+	Expect(ok).To(BeTrue(), "discover API groups for nettest UID selection: expected APIGroupList, received %T", response)
++		groups, ok := response.(*metav1.APIGroupList)
++		if !ok {
++			return nil, fmt.Errorf("expected APIGroupList, received %T", response)
++		}
++
++		return groups, nil
++	}, framework.NoopCheckResult)
 +
 +	for i := range groups.Groups {
 +		if groups.Groups[i].Name == "security.openshift.io" {
@@ -104,10 +113,10 @@ index 479d16db..045ec1f0 100644
 +}
 diff --git a/test/unit/framework/deployments_test.go b/test/unit/framework/deployments_test.go
 new file mode 100644
-index 00000000..74b6c7ea
+index 00000000..559bfd03
 --- /dev/null
 +++ b/test/unit/framework/deployments_test.go
-@@ -0,0 +1,231 @@
+@@ -0,0 +1,258 @@
 +/*
 +SPDX-License-Identifier: Apache-2.0
 +
@@ -174,17 +183,22 @@ index 00000000..74b6c7ea
 +		f.Namespace = "nettest-uid"
 +	})
 +
-+	builders := map[string]func(*lhframework.Framework, framework.ClusterIndex){
-+		"nginx-demo": func(f *lhframework.Framework, cluster framework.ClusterIndex) {
++	builders := []struct {
++		name  string
++		build func(*lhframework.Framework, framework.ClusterIndex)
++	}{
++		{"nginx-demo", func(f *lhframework.Framework, cluster framework.ClusterIndex) {
 +			f.NewNginxDeployment(cluster)
-+		},
-+		"netshoot": func(f *lhframework.Framework, cluster framework.ClusterIndex) {
++		}},
++		{"netshoot", func(f *lhframework.Framework, cluster framework.ClusterIndex) {
 +			f.NewNetShootDeployment(cluster)
-+		},
++		}},
 +	}
 +
-+	for name, build := range builders {
-+		Context("for "+name, func() {
++	for _, builder := range builders {
++		build := builder.build
++
++		Context("for "+builder.name, func() {
 +			It("should leave the UID to SCC admission only on the cluster that serves security.openshift.io", func() {
 +				build(f, framework.ClusterB)
 +				build(f, framework.ClusterA)
@@ -192,13 +206,23 @@ index 00000000..74b6c7ea
 +				Expect(openShift.discoveries()).To(Equal(1))
 +				Expect(plain.discoveries()).To(Equal(1))
 +
-+				Expect(openShift.pods()).To(HaveLen(1))
-+				Expect(openShift.pods()[0].SecurityContext.RunAsUser).To(BeNil())
-+				expectHardened(openShift.pods()[0])
++				Expect(openShift.podSpecs()).To(HaveLen(1))
++				Expect(openShift.podSpecs()[0].SecurityContext.RunAsUser).To(BeNil())
++				expectHardened(openShift.podSpecs()[0])
 +
-+				Expect(plain.pods()).To(HaveLen(1))
-+				Expect(plain.pods()[0].SecurityContext.RunAsUser).To(HaveValue(Equal(int64(10000))))
-+				expectHardened(plain.pods()[0])
++				Expect(plain.podSpecs()).To(HaveLen(1))
++				Expect(plain.podSpecs()[0].SecurityContext.RunAsUser).To(HaveValue(Equal(int64(10000))))
++				expectHardened(plain.podSpecs()[0])
++			})
++
++			It("should retry transient API discovery errors", func() {
++				plain.transientFailures = 1
++
++				build(f, framework.ClusterA)
++
++				Expect(plain.discoveries()).To(Equal(2))
++				Expect(plain.podSpecs()).To(HaveLen(1))
++				Expect(plain.podSpecs()[0].SecurityContext.RunAsUser).To(HaveValue(Equal(int64(10000))))
 +			})
 +
 +			It("should fail without creating the Deployment when API discovery fails", func() {
@@ -206,7 +230,7 @@ index 00000000..74b6c7ea
 +
 +				Expect(InterceptGomegaFailure(func() { build(f, framework.ClusterA) })).To(
 +					MatchError(ContainSubstring("discover API groups for nettest UID selection")))
-+				Expect(plain.pods()).To(BeEmpty())
++				Expect(plain.podSpecs()).To(BeEmpty())
 +			})
 +
 +			It("should fail without creating the Deployment when discovery does not return an APIGroupList", func() {
@@ -214,7 +238,7 @@ index 00000000..74b6c7ea
 +
 +				Expect(InterceptGomegaFailure(func() { build(f, framework.ClusterA) })).To(
 +					MatchError(ContainSubstring("expected APIGroupList")))
-+				Expect(plain.pods()).To(BeEmpty())
++				Expect(plain.podSpecs()).To(BeEmpty())
 +			})
 +
 +			It("should bound API discovery by the operation timeout", func() {
@@ -225,7 +249,7 @@ index 00000000..74b6c7ea
 +				Expect(InterceptGomegaFailure(func() { build(f, framework.ClusterA) })).To(
 +					MatchError(ContainSubstring("context deadline exceeded")))
 +				Expect(time.Since(start)).To(BeNumerically("<", 5*time.Second))
-+				Expect(plain.pods()).To(BeEmpty())
++				Expect(plain.podSpecs()).To(BeEmpty())
 +			})
 +		})
 +	}
@@ -245,20 +269,24 @@ index 00000000..74b6c7ea
 +// fakeCluster serves API discovery and records the pod templates of created Deployments. It reports a Running pod so
 +// the builders' wait completes.
 +type fakeCluster struct {
-+	podSpecs        []*corev1.PodSpec
-+	discoveryBody   string
-+	mutex           sync.Mutex
-+	discoveryCount  int
-+	discoveryStatus int32
-+	openShift       bool
-+	stall           bool
++	specs             []*corev1.PodSpec
++	discoveryBody     string
++	mutex             sync.Mutex
++	discoveryCount    int
++	discoveryStatus   int32
++	transientFailures int32
++	openShift         bool
++	stall             bool
 +}
 +
 +func (c *fakeCluster) start() *kubernetes.Clientset {
 +	server := httptest.NewServer(http.HandlerFunc(c.serve))
 +	DeferCleanup(server.Close)
 +
-+	client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL, ContentConfig: rest.ContentConfig{ContentType: "application/json"}})
++	client, err := kubernetes.NewForConfig(&rest.Config{
++		Host:          server.URL,
++		ContentConfig: rest.ContentConfig{ContentType: "application/json"},
++	})
 +	Expect(err).NotTo(HaveOccurred())
 +
 +	return client
@@ -277,7 +305,7 @@ index 00000000..74b6c7ea
 +		Expect(json.NewDecoder(r.Body).Decode(deployment)).To(Succeed())
 +
 +		c.mutex.Lock()
-+		c.podSpecs = append(c.podSpecs, &deployment.Spec.Template.Spec)
++		c.specs = append(c.specs, &deployment.Spec.Template.Spec)
 +		c.mutex.Unlock()
 +
 +		Expect(json.NewEncoder(w).Encode(deployment)).To(Succeed())
@@ -294,9 +322,13 @@ index 00000000..74b6c7ea
 +func (c *fakeCluster) serveDiscovery(w http.ResponseWriter, r *http.Request) {
 +	c.mutex.Lock()
 +	c.discoveryCount++
++	transient := c.transientFailures > 0
++	c.transientFailures--
 +	c.mutex.Unlock()
 +
 +	switch {
++	case transient:
++		c.writeStatus(w, http.StatusServiceUnavailable, metav1.StatusReasonServiceUnavailable)
 +	case c.stall:
 +		select {
 +		case <-r.Context().Done():
@@ -304,11 +336,7 @@ index 00000000..74b6c7ea
 +			w.WriteHeader(http.StatusGatewayTimeout)
 +		}
 +	case c.discoveryStatus != 0:
-+		w.WriteHeader(int(c.discoveryStatus))
-+		Expect(json.NewEncoder(w).Encode(&metav1.Status{
-+			TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-+			Status:   metav1.StatusFailure, Code: c.discoveryStatus, Reason: metav1.StatusReasonForbidden,
-+		})).To(Succeed())
++		c.writeStatus(w, c.discoveryStatus, metav1.StatusReasonForbidden)
 +	case c.discoveryBody != "":
 +		_, err := w.Write([]byte(c.discoveryBody))
 +		Expect(err).NotTo(HaveOccurred())
@@ -326,6 +354,14 @@ index 00000000..74b6c7ea
 +	}
 +}
 +
++func (c *fakeCluster) writeStatus(w http.ResponseWriter, code int32, reason metav1.StatusReason) {
++	w.WriteHeader(int(code))
++	Expect(json.NewEncoder(w).Encode(&metav1.Status{
++		TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
++		Status:   metav1.StatusFailure, Code: code, Reason: reason,
++	})).To(Succeed())
++}
++
 +func (c *fakeCluster) discoveries() int {
 +	c.mutex.Lock()
 +	defer c.mutex.Unlock()
@@ -333,15 +369,15 @@ index 00000000..74b6c7ea
 +	return c.discoveryCount
 +}
 +
-+func (c *fakeCluster) pods() []*corev1.PodSpec {
++func (c *fakeCluster) podSpecs() []*corev1.PodSpec {
 +	c.mutex.Lock()
 +	defer c.mutex.Unlock()
 +
-+	return c.podSpecs
++	return c.specs
 +}
 diff --git a/test/unit/framework/framework_suite_test.go b/test/unit/framework/framework_suite_test.go
 new file mode 100644
-index 00000000..86b150db
+index 00000000..7c5b748e
 --- /dev/null
 +++ b/test/unit/framework/framework_suite_test.go
 @@ -0,0 +1,31 @@
@@ -374,5 +410,5 @@ index 00000000..86b150db
 +
 +func TestFramework(t *testing.T) {
 +	RegisterFailHandler(Fail)
-+	RunSpecs(t, "E2E Framework Suite")
++	RunSpecs(t, "Framework Suite")
 +}

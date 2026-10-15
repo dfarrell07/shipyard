@@ -1,0 +1,18 @@
+# GOWORK=off; Go 1.26.8; golangci-lint 2.11.3 (lint counts exclude pre-existing findings in untouched framework.go and
+# service_discovery.go). "original-code" swaps in the branch's original deployments.go and reruns the suite.
+devel         build=ok lint=0 test=10 Passed | 0 Failed (3 randomized -race runs) original-code=0 Passed | 10 Failed
+release-0.25  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.24  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.23  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.22  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.21  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.20  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.19  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
+release-0.18  build=ok test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed (lint: v1 config, left to branch CI)
+
+# devel mutants (each must fail):
+M0 original code                FAIL! -- 0 Passed | 10 Failed
+M1 always cluster A             FAIL! -- 8 Passed | 2 Failed
+M2 errors fall back to 10000    FAIL! -- 4 Passed | 6 Failed
+M3 unbounded request            FAIL! -- 8 Passed | 2 Failed
+M5 no retry                     FAIL! -- 2 Passed | 8 Failed
