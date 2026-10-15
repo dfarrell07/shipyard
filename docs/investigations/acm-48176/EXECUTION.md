@@ -44,11 +44,12 @@ Those PRs must include an explicit run, for example:
 
 1. **QE, now and in parallel:** run [QE step 1](QE-VALIDATION.md#1-reproduce-the-controller-failure-in-scratch-namespaces) on both
    clusters. If the ReplicaSet message is not the UID 10000 range rejection, stop and revisit the diagnosis before merging anything.
-2. **Lighthouse `devel`:** push and open the PR (commands below). Wait for CI (unit, lint, kind e2e exercising the UID 10000 path)
-   and review. If review changes the code, carry the same change to every branch commit and re-export the patches.
-3. **Backports:** open one PR per release branch, as done for the original hardening (#2228–#2235). Prioritize `release-0.23`
-   (QE blocker), then `release-0.24` and `release-0.22` (affected shipped releases), then `0.25`, `0.21`–`0.18`.
-4. **Release decision for 0.23:** the Subctl component is the only artifact to rebuild.
+2. **Lighthouse PRs, all at once:** these are per-branch ports, not cherry-picks of a merged `devel` commit, so open all nine
+   PRs together and link them to each other. The original hardening did the same: #2228–#2235 were opened within 45 minutes,
+   and the release branches merged before `devel`. Each PR gets CI on its own branch (unit, lint, kind e2e exercising the UID 10000 path).
+   There are three code variants (`devel`/`0.25`, `0.19`–`0.24`, `0.18`). If review changes one, apply the same change to every
+   PR and re-export the patches. Merge `release-0.23` first if possible; it blocks QE.
+3. **Release decision for 0.23:** the Subctl component is the only artifact to rebuild.
    - Respin 0.23.4: after the `release-0.23` merge, in a fresh Subctl `release-0.23` checkout run
      `GOWORK=off go get github.com/submariner-io/lighthouse@<merged-sha> && GOWORK=off go mod tidy`. Expect a
      `v0.23.5-0.<timestamp>-<sha12>` pseudo-version. Lighthouse's `go.mod` is unchanged since v0.23.4, so only that line and
@@ -56,23 +57,34 @@ Those PRs must include an explicit run, for example:
    - Ship 0.23.5: tag through the normal release process; Subctl gets "Update Submariner dependencies to v0.23.5".
    Either way, inspect the delivered executable as [section 3](IMPLEMENTATION.md#3-pin-and-deliver-a-fresh-subctl-executable) requires.
    Downstream Subctl reports `release-0.23` as its version, so version text cannot distinguish a respin.
-5. **QE acceptance:** QE steps 3–5 with the new Subctl, both directions, with no SCC grant in place. Close ACM-48176 and ACM-48194.
-6. **Follow-ups:** known-issue note for Subctl v0.22.2, v0.23.2/v0.23.4, v0.24.2; Shipyard #2618 for `devel` YAMLs.
+4. **QE acceptance:** QE steps 3–5 with the new Subctl, both directions, with no SCC grant in place. Close ACM-48176 and ACM-48194.
+5. **Follow-ups:** known-issue note for Subctl v0.22.2, v0.23.2/v0.23.4, v0.24.2; Shipyard #2618 for `devel` YAMLs.
 
 ## Publishing commands
 
-Run these from each worktree after reviewing its commit. Use the [devel body](evidence/lighthouse-branches/pr-body.txt) for all PRs,
-and append the [old-runner note](evidence/lighthouse-branches/pr-body-old-runner.txt) with real output for `release-0.18`–`0.22`.
+Review each worktree's commit first. The loop uses the [shared PR body](evidence/lighthouse-branches/pr-body.txt).
+For `release-0.18`–`0.22` it appends that branch's explicit test run. It stops at the first failure.
 
-```bash
-b=devel   # then release-0.23, release-0.24, ...
-cd ~/go/src/submariner-io/.worktrees/acm-48176-exec/$b
-git push dfarrell_lh "nettest-scc-uid-$b"
-gh pr create --repo submariner-io/lighthouse --base "$b" --head "dfarrell07:nettest-scc-uid-$b" \
-  --title "Let OpenShift assign nettest helper pod UIDs" \
-  --body-file ~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence/lighthouse-branches/pr-body.txt \
-  --assignee "@me"
-```
+~~~bash
+ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence/lighthouse-branches
+session=https://claude.ai/code/session_01YTdbc3vVeY8XMVvhVmqgWD
+for b in devel release-0.25 release-0.24 release-0.23 release-0.22 release-0.21 release-0.20 release-0.19 release-0.18; do
+  cd ~/go/src/submariner-io/.worktrees/acm-48176-exec/$b || break
+  body=$(mktemp)
+  grep -v "^$session" "$ev/pr-body.txt" > "$body"
+  case $b in
+  release-0.1[89] | release-0.2[012])
+    out=$(GOWORK=off go test -v -race -count=1 ./test/unit/framework/ --ginkgo.no-color 2>&1) || { echo "$b: tests failed"; break; }
+    printf '\nOn this branch the shared unit runner skips test directories whose `_test.go` files mention `e2e`,\n'
+    printf 'so `make unit` does not run `test/unit/framework`. Explicit run:\n\n```text\n%s\n```\n' "$(grep -E '^Ran |^SUCCESS|^ok' <<<"$out")"
+    ;;
+  esac >> "$body"
+  printf '\n%s\n' "$session" >> "$body"
+  git push dfarrell_lh "nettest-scc-uid-$b" &&
+    gh pr create --repo submariner-io/lighthouse --base "$b" --head "dfarrell07:nettest-scc-uid-$b" \
+      --title "Let OpenShift assign nettest helper pod UIDs" --body-file "$body" --assignee "@me" || break
+done
+~~~
 
 Remove the worktrees after the PRs merge:
 `git -C ~/go/src/submariner-io/lighthouse worktree remove ~/go/src/submariner-io/.worktrees/acm-48176-exec/<branch>`.
