@@ -3,4 +3,4 @@ Checking if Makefile.shipyard is up to date
 Checking if Dockerfile.dapper is up to date
 Checking if Dockerfile.linting is up to date
 go test ./test/e2e/framework
-ok  	github.com/submariner-io/shipyard/test/e2e/framework	(cached)
+ok      github.com/submariner-io/shipyard/test/e2e/framework    (cached)

@@ -3,7 +3,7 @@ Checking if Makefile.shipyard is up to date
 Checking if Dockerfile.dapper is up to date
 Checking if Dockerfile.linting is up to date
 go test ./test/e2e/framework
-ok  	github.com/submariner-io/shipyard/test/e2e/framework	0.356s
+ok      github.com/submariner-io/shipyard/test/e2e/framework    0.356s
 ./scripts/shared/unit_test.sh
 Looking for packages to test
 Looking for tests in module .
@@ -29,8 +29,8 @@ SUCCESS! -- 1 Passed | 0 Failed | 0 Pending | 0 Skipped
 --- PASS: TestUnit (0.01s)
 PASS
 coverage: [no statements]
-ok  	github.com/submariner-io/shipyard/test/scripts/unit	0.022s	coverage: [no statements]
-total:	(statements)	0.0%
+ok      github.com/submariner-io/shipyard/test/scripts/unit     0.022s  coverage: [no statements]
+total:  (statements)    0.0%
 Looking for tests in module ./.claude/worktrees/wf_ec4d2a76-ab0-5
 Running tests in ./test/scripts/unit
 === RUN   TestUnit
@@ -54,7 +54,7 @@ SUCCESS! -- 1 Passed | 0 Failed | 0 Pending | 0 Skipped
 --- PASS: TestUnit (0.01s)
 PASS
 coverage: [no statements]
-ok  	github.com/submariner-io/shipyard/test/scripts/unit	0.030s	coverage: [no statements]
-total:	(statements)	0.0%
+ok      github.com/submariner-io/shipyard/test/scripts/unit     0.030s  coverage: [no statements]
+total:  (statements)    0.0%
 Looking for tests in module ./.claude/worktrees/wf_ec4d2a76-ab0-5/tools
 Looking for tests in module ./tools

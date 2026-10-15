@@ -12,7 +12,9 @@ scratch = ['--tmpfs', '/tmp:rw,nosuid,nodev,size=64m,mode=1777']
 results = []
 for name, image in images.items():
     inspect = subprocess.run(['skopeo', 'inspect', 'docker://' + image], text=True, capture_output=True, check=True)
-    (out / (name + '-image.json')).write_text(inspect.stdout)
+    metadata = json.loads(inspect.stdout)
+    metadata.pop('RepoTags', None)
+    (out / (name + '-image.json')).write_text(json.dumps(metadata, indent=2) + '\n')
     for server_tmp, client_tmp in [(False, False), (True, False), (False, True), (True, True)]:
         case = f'{name}-server-tmp-{server_tmp}-client-tmp-{client_tmp}'
         server = subprocess.run(base + (scratch if server_tmp else []) + ['-d', image, 'iperf3', '-s', '-p', '5201'], text=True, capture_output=True, check=True).stdout.strip()

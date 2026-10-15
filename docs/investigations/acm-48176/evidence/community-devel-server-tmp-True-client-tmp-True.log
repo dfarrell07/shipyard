@@ -10,17 +10,17 @@ Connecting to host 127.0.0.1, port 5201
 [ 20] local 127.0.0.1 port 49070 connected to 127.0.0.1 port 5201
 [ 22] local 127.0.0.1 port 49078 connected to 127.0.0.1 port 5201
 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
-[  4]   0.00-1.00   sec   777 MBytes  6.50 Gbits/sec    3   1.12 MBytes       
-[  6]   0.00-1.00   sec   616 MBytes  5.16 Gbits/sec   17    639 KBytes       
-[  8]   0.00-1.00   sec   398 MBytes  3.33 Gbits/sec    5   1.06 MBytes       
-[ 10]   0.00-1.00   sec   602 MBytes  5.04 Gbits/sec    4   1.12 MBytes       
-[ 12]   0.00-1.00   sec   402 MBytes  3.37 Gbits/sec   13   1.44 MBytes       
-[ 14]   0.00-1.00   sec   315 MBytes  2.64 Gbits/sec    1   1.12 MBytes       
-[ 16]   0.00-1.00   sec   704 MBytes  5.89 Gbits/sec   17    639 KBytes       
-[ 18]   0.00-1.00   sec   318 MBytes  2.66 Gbits/sec    6   1.12 MBytes       
-[ 20]   0.00-1.00   sec   314 MBytes  2.62 Gbits/sec    5   1.12 MBytes       
-[ 22]   0.00-1.00   sec   440 MBytes  3.68 Gbits/sec    9   1.12 MBytes       
-[SUM]   0.00-1.00   sec  4.77 GBytes  40.9 Gbits/sec   80             
+[  4]   0.00-1.00   sec   777 MBytes  6.50 Gbits/sec    3   1.12 MBytes
+[  6]   0.00-1.00   sec   616 MBytes  5.16 Gbits/sec   17    639 KBytes
+[  8]   0.00-1.00   sec   398 MBytes  3.33 Gbits/sec    5   1.06 MBytes
+[ 10]   0.00-1.00   sec   602 MBytes  5.04 Gbits/sec    4   1.12 MBytes
+[ 12]   0.00-1.00   sec   402 MBytes  3.37 Gbits/sec   13   1.44 MBytes
+[ 14]   0.00-1.00   sec   315 MBytes  2.64 Gbits/sec    1   1.12 MBytes
+[ 16]   0.00-1.00   sec   704 MBytes  5.89 Gbits/sec   17    639 KBytes
+[ 18]   0.00-1.00   sec   318 MBytes  2.66 Gbits/sec    6   1.12 MBytes
+[ 20]   0.00-1.00   sec   314 MBytes  2.62 Gbits/sec    5   1.12 MBytes
+[ 22]   0.00-1.00   sec   440 MBytes  3.68 Gbits/sec    9   1.12 MBytes
+[SUM]   0.00-1.00   sec  4.77 GBytes  40.9 Gbits/sec   80
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bitrate         Retr
 [  4]   0.00-1.00   sec   777 MBytes  6.50 Gbits/sec    3            sender
@@ -64,29 +64,29 @@ Accepted connection from 127.0.0.1, port 48974
 [ 21] local 127.0.0.1 port 5201 connected to 127.0.0.1 port 49070
 [ 23] local 127.0.0.1 port 5201 connected to 127.0.0.1 port 49078
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-1.00   sec   777 MBytes  6.52 Gbits/sec                  
-[  7]   0.00-1.00   sec   614 MBytes  5.15 Gbits/sec                  
-[  9]   0.00-1.00   sec   396 MBytes  3.32 Gbits/sec                  
-[ 11]   0.00-1.00   sec   602 MBytes  5.05 Gbits/sec                  
-[ 13]   0.00-1.00   sec   401 MBytes  3.36 Gbits/sec                  
-[ 15]   0.00-1.00   sec   314 MBytes  2.63 Gbits/sec                  
-[ 17]   0.00-1.00   sec   703 MBytes  5.89 Gbits/sec                  
-[ 19]   0.00-1.00   sec   314 MBytes  2.63 Gbits/sec                  
-[ 21]   0.00-1.00   sec   313 MBytes  2.62 Gbits/sec                  
-[ 23]   0.00-1.00   sec   437 MBytes  3.67 Gbits/sec                  
-[SUM]   0.00-1.00   sec  4.76 GBytes  40.8 Gbits/sec                  
+[  5]   0.00-1.00   sec   777 MBytes  6.52 Gbits/sec
+[  7]   0.00-1.00   sec   614 MBytes  5.15 Gbits/sec
+[  9]   0.00-1.00   sec   396 MBytes  3.32 Gbits/sec
+[ 11]   0.00-1.00   sec   602 MBytes  5.05 Gbits/sec
+[ 13]   0.00-1.00   sec   401 MBytes  3.36 Gbits/sec
+[ 15]   0.00-1.00   sec   314 MBytes  2.63 Gbits/sec
+[ 17]   0.00-1.00   sec   703 MBytes  5.89 Gbits/sec
+[ 19]   0.00-1.00   sec   314 MBytes  2.63 Gbits/sec
+[ 21]   0.00-1.00   sec   313 MBytes  2.62 Gbits/sec
+[ 23]   0.00-1.00   sec   437 MBytes  3.67 Gbits/sec
+[SUM]   0.00-1.00   sec  4.76 GBytes  40.8 Gbits/sec
 - - - - - - - - - - - - - - - - - - - - - - - - -
-[  5]   1.00-1.00   sec  0.00 Bytes  0.00 bits/sec                  
-[  7]   1.00-1.00   sec  2.12 MBytes  4.50 Gbits/sec                  
-[  9]   1.00-1.00   sec  1.50 MBytes  3.18 Gbits/sec                  
-[ 11]   1.00-1.00   sec   768 KBytes  1.59 Gbits/sec                  
-[ 13]   1.00-1.00   sec  1.88 MBytes  3.97 Gbits/sec                  
-[ 15]   1.00-1.00   sec  1.25 MBytes  2.65 Gbits/sec                  
-[ 17]   1.00-1.00   sec   896 KBytes  1.85 Gbits/sec                  
-[ 19]   1.00-1.00   sec  3.50 MBytes  7.42 Gbits/sec                  
-[ 21]   1.00-1.00   sec   896 KBytes  1.85 Gbits/sec                  
-[ 23]   1.00-1.00   sec  2.75 MBytes  5.83 Gbits/sec                  
-[SUM]   1.00-1.00   sec  15.5 MBytes  32.8 Gbits/sec                  
+[  5]   1.00-1.00   sec  0.00 Bytes  0.00 bits/sec
+[  7]   1.00-1.00   sec  2.12 MBytes  4.50 Gbits/sec
+[  9]   1.00-1.00   sec  1.50 MBytes  3.18 Gbits/sec
+[ 11]   1.00-1.00   sec   768 KBytes  1.59 Gbits/sec
+[ 13]   1.00-1.00   sec  1.88 MBytes  3.97 Gbits/sec
+[ 15]   1.00-1.00   sec  1.25 MBytes  2.65 Gbits/sec
+[ 17]   1.00-1.00   sec   896 KBytes  1.85 Gbits/sec
+[ 19]   1.00-1.00   sec  3.50 MBytes  7.42 Gbits/sec
+[ 21]   1.00-1.00   sec   896 KBytes  1.85 Gbits/sec
+[ 23]   1.00-1.00   sec  2.75 MBytes  5.83 Gbits/sec
+[SUM]   1.00-1.00   sec  15.5 MBytes  32.8 Gbits/sec
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bitrate
 [  5]   0.00-1.00   sec   777 MBytes  6.49 Gbits/sec                  receiver

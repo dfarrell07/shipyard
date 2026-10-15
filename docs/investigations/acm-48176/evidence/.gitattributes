@@ -1,0 +1,2 @@
+# Preserve context whitespace required by portable patch artifacts.
+*.patch -whitespace

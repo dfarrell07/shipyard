@@ -151,6 +151,9 @@ test functional behavior, not performance or OpenShift admission.
 With only the client fixed, RHEL's client reports `unable to initialize stream: Transport endpoint is not connected`; the server log exposes
 the underlying read-only filesystem error. This is why looking only at the client can misleadingly suggest a networking fault.
 
+The [image-default check](evidence/image-default-users.json) separately records each pinned image’s configured user and runs
+`id -u` without any user override. Both return 10000. The arbitrary-UID checks below establish a different property.
+
 HTTP/DNS checks use UID 1000780000 mapped explicitly into the local rootless container namespace. An initial attempt without that mapping
 hit the local Podman UID-map limit; it was not an image permission failure. Both mapped checks pass.
 
@@ -174,7 +177,11 @@ Verification completed:
 - Local image runtime matrix: **10 expected results**, with the eight throughput combinations and two arbitrary-UID HTTP/DNS checks detailed
   above.
 
-Logs are stored alongside the evidence. Initial concurrent Go builds exhausted the per-user `/tmp` quota; reruns with task-specific
+Logs are stored alongside the evidence. The verification list above describes the initial scratch/UID correction; the follow-up
+review and benchmark notes identify later corrections and their additional checks. Committed log presentation removes ANSI colors,
+expands tabs, and strips trailing blanks. Patch artifacts retain their required context whitespace. Image metadata snapshots omit the
+registry's unrelated mutable tag listing. These presentation changes do not alter the recorded statuses, diagnostics, digests, or
+measurement values. Initial concurrent Go builds exhausted the per-user `/tmp` quota; reruns with task-specific
 `GOTMPDIR` on the home filesystem completed successfully. The available cluster credentials can read the Konflux namespace and image
 metadata but cannot create pods there or read SCC definitions, so no actual OpenShift admission or two-cluster QE rerun is claimed.
 

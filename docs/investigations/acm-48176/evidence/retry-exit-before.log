@@ -10,5 +10,5 @@
             Expected an error to have occurred.  Got:
                 <nil>: nil
 FAIL
-FAIL	github.com/submariner-io/shipyard/test/e2e/framework	0.786s
+FAIL    github.com/submariner-io/shipyard/test/e2e/framework    0.786s
 FAIL
