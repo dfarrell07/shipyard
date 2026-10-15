@@ -1,8 +1,0 @@
-Connecting to host 127.0.0.1, port 5201
-iperf3: error - unable to create a new stream: Read-only file system
-
-SERVER:
------------------------------------------------------------
-Server listening on 5201
------------------------------------------------------------
-Accepted connection from 127.0.0.1, port 38928

@@ -1,2 +1,0 @@
-internal-style field in external YAML: strict decoding error: unknown field "spec.securityContext.hostUsers"
-external PodSpec field: <nil>

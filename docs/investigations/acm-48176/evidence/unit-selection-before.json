@@ -1,8 +1,0 @@
-{
-  "excluded_directories": [
-    "test/e2e"
-  ],
-  "fixture": "test/e2e/framework/network_pods_internal_test.go",
-  "fixture_is_under_excluded_directory": true,
-  "source": "scripts/shared/unit_test.sh"
-}
