@@ -40,5 +40,7 @@
     "original/netshoot": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2",
     "patched/nginx-demo": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b",
     "patched/netshoot": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0"
-  }
+  },
+  "namespace_mcs_annotation_fixture": "s0:c1,c0",
+  "namespace_supplemental_groups_annotation_fixture": "1001530000/10000"
 }

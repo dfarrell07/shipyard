@@ -18,8 +18,10 @@ Exact revisions, input hashes, and manifest URLs are in [provenance](admission-p
    run it with `go run -mod=readonly /path/to/export.go /path/to/original-inputs`.
    It calls the real builders against a local HTTP fixture and captures their serialized templates. Its Running pod response only
    lets the builder's wait finish; it supplies no SCC decision.
-2. Apply the two-line [Lighthouse patch](lighthouse-scc.patch) to an isolated checkout of the same builder source and run the exporter
-   there with a separate output directory. The exported objects must differ only in the two removed UID fields.
+2. Apply the conditional [Lighthouse candidate patch](lighthouse-scc.patch) to an isolated checkout of the same builder source and run
+   the exporter there with a separate output directory. The exporter's default fixture advertises OpenShift. These exported objects
+   must differ only in the two removed UID fields. Also run the exporter with its second argument `kubernetes`; those outputs must
+   equal the original templates, preserving UID 10000 for older images on plain Kubernetes.
 3. Download the pinned OpenShift apiserver-library-go source with its vendor directory. Copy
    [the check](admission-check.go.txt) to `pkg/securitycontextconstraints/sccadmission/acm48176_policy_test.go` in that isolated source.
    It reuses the upstream test helpers for the admission plugin and informer fixtures.
@@ -30,6 +32,7 @@ Exact revisions, input hashes, and manifest URLs are in [provenance](admission-p
    Run `go test -mod=vendor -p 2 -v ./pkg/securitycontextconstraints/sccadmission -run '^TestACM48176ShippedPolicies$'`.
    Set GOTMPDIR to a directory with sufficient space if needed. This does not add dependencies or tests to Shipyard.
 
-This proves the patch repairs this admission failure for the tested default-policy conditions. It cannot identify which operation
-failed in ACM-48176 without the QE timeout detail and events. The initial expectation that an anyuid grant would be enough was
+This proves the patch repairs this admission failure for the tested default-policy conditions. The attached QE timeout details now
+identify the operation: both helper Deployments time out with zero matching pods. The archive still lacks the ReplicaSet events
+needed to establish why pod creation failed. The initial expectation that an anyuid grant would be enough was
 refuted by the real-policy experiment; the recorded check includes the corrected expectation rather than weakening the policy.

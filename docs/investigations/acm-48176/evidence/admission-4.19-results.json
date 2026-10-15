@@ -1,0 +1,246 @@
+[
+  {
+    "accepted": false,
+    "error": "pods \"nginx-demo\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "default-controller",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"nginx-demo\" is forbidden: unable to validate against any security context constraint: [pod.metadata.annotations[seccomp.security.alpha.kubernetes.io/pod]: Forbidden: seccomp may not be set, pod.metadata.annotations[container.seccomp.security.alpha.kubernetes.io/nginx-demo]: Forbidden: seccomp may not be set, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "requester-anyuid",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"nginx-demo\" is forbidden: unable to validate against any security context constraint: [pod.metadata.annotations[seccomp.security.alpha.kubernetes.io/pod]: Forbidden: seccomp may not be set, pod.metadata.annotations[container.seccomp.security.alpha.kubernetes.io/nginx-demo]: Forbidden: seccomp may not be set, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "sa-anyuid",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 10000,
+    "expected": true,
+    "grant_fixture": "privileged-requester",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo",
+    "selected_scc": "privileged"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 10000,
+    "expected": true,
+    "grant_fixture": "privileged-sa",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo",
+    "selected_scc": "privileged"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"nginx-demo\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider \"restricted-v2\": Forbidden: not usable by user or serviceaccount, provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "no-grants",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "nginx-demo"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "default-controller",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "requester-anyuid",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "sa-anyuid",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "privileged-requester",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "privileged-sa",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"nginx-demo\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider \"restricted-v2\": Forbidden: not usable by user or serviceaccount, provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "no-grants",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "nginx-demo"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"netshoot\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "default-controller",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"netshoot\" is forbidden: unable to validate against any security context constraint: [pod.metadata.annotations[seccomp.security.alpha.kubernetes.io/pod]: Forbidden: seccomp may not be set, pod.metadata.annotations[container.seccomp.security.alpha.kubernetes.io/netshoot]: Forbidden: seccomp may not be set, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "requester-anyuid",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"netshoot\" is forbidden: unable to validate against any security context constraint: [pod.metadata.annotations[seccomp.security.alpha.kubernetes.io/pod]: Forbidden: seccomp may not be set, pod.metadata.annotations[container.seccomp.security.alpha.kubernetes.io/netshoot]: Forbidden: seccomp may not be set, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges: [1001530000, 1001539999], provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "sa-anyuid",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 10000,
+    "expected": true,
+    "grant_fixture": "privileged-requester",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot",
+    "selected_scc": "privileged"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 10000,
+    "expected": true,
+    "grant_fixture": "privileged-sa",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot",
+    "selected_scc": "privileged"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"netshoot\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider \"restricted-v2\": Forbidden: not usable by user or serviceaccount, provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "no-grants",
+    "hostUsers_false_control": false,
+    "patched": false,
+    "pod": "netshoot"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "default-controller",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "requester-anyuid",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "sa-anyuid",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "privileged-requester",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": true,
+    "authorized_subject": "",
+    "effective_pod_uid": 1001530000,
+    "expected": true,
+    "grant_fixture": "privileged-sa",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot",
+    "selected_scc": "restricted-v2"
+  },
+  {
+    "accepted": false,
+    "error": "pods \"netshoot\" is forbidden: unable to validate against any security context constraint: [provider \"anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostaccess\": Forbidden: not usable by user or serviceaccount, provider \"hostmount-anyuid\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork\": Forbidden: not usable by user or serviceaccount, provider \"hostnetwork-v2\": Forbidden: not usable by user or serviceaccount, provider \"nonroot\": Forbidden: not usable by user or serviceaccount, provider \"nonroot-v2\": Forbidden: not usable by user or serviceaccount, provider \"restricted\": Forbidden: not usable by user or serviceaccount, provider \"restricted-v2\": Forbidden: not usable by user or serviceaccount, provider \"privileged\": Forbidden: not usable by user or serviceaccount]",
+    "expected": false,
+    "grant_fixture": "no-grants",
+    "hostUsers_false_control": false,
+    "patched": true,
+    "pod": "netshoot"
+  }
+]

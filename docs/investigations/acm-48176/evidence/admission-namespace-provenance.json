@@ -1,0 +1,17 @@
+{
+  "admission_library_commit": "f0d44ef6e53b49bd864c035752191a85b293af14",
+  "policies": "Same pinned OpenShift 4.20 manifests and exported templates as admission-provenance.json",
+  "cases_per_template": 5,
+  "templates": [
+    "nginx-demo",
+    "netshoot"
+  ],
+  "modified_namespace_fixtures": {
+    "default-controller": "UID and supplemental group ranges: 1001530000/10000; MCS: s0:c1,c0",
+    "missing-supplemental": "SupplementalGroupsAnnotation absent; UID fallback expected",
+    "empty-mcs": "MCSAnnotation empty; rejection expected",
+    "empty-uid": "UIDRangeAnnotation empty; rejection expected",
+    "zero-uid": "UIDRangeAnnotation: 0/10000; admission assigns UID 0 despite RunAsNonRoot; intentionally nonstandard allocation counterexample"
+  },
+  "scope": "Real SCC mutation and validation only. The zero UID fixture demonstrates why admission acceptance does not establish runtime success. Authorization uses the existing restricted-v2 and restricted-v3 grant fixture."
+}

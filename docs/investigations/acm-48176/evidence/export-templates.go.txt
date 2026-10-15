@@ -19,8 +19,15 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		panic("output directory required")
+	if len(os.Args) < 2 || len(os.Args) > 3 {
+		panic("output directory and optional platform (openshift or kubernetes) required")
+	}
+	platform := "openshift"
+	if len(os.Args) == 3 {
+		platform = os.Args[2]
+	}
+	if platform != "openshift" && platform != "kubernetes" {
+		panic("unsupported platform")
 	}
 	out := os.Args[1]
 	if err := os.MkdirAll(out, 0o700); err != nil {
@@ -29,6 +36,23 @@ func main() {
 	gomega.RegisterFailHandler(func(message string, _ ...int) { panic(message) })
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/api" {
+			if err := json.NewEncoder(w).Encode(meta.APIVersions{TypeMeta: meta.TypeMeta{APIVersion: "v1", Kind: "APIVersions"}, Versions: []string{"v1"}}); err != nil {
+				panic(err)
+			}
+			return
+		}
+		if r.URL.Path == "/apis" {
+			groups := &meta.APIGroupList{TypeMeta: meta.TypeMeta{APIVersion: "v1", Kind: "APIGroupList"}}
+			if platform == "openshift" {
+				version := meta.GroupVersionForDiscovery{GroupVersion: "security.openshift.io/v1", Version: "v1"}
+				groups.Groups = []meta.APIGroup{{Name: "security.openshift.io", Versions: []meta.GroupVersionForDiscovery{version}, PreferredVersion: version}}
+			}
+			if err := json.NewEncoder(w).Encode(groups); err != nil {
+				panic(err)
+			}
+			return
+		}
 		if r.Method == http.MethodPost {
 			dep := &apps.Deployment{}
 			if err := json.NewDecoder(r.Body).Decode(dep); err != nil {
@@ -68,5 +92,5 @@ func main() {
 	f.Namespace = "scc-proof"
 	f.NewNginxDeployment(sy.ClusterA)
 	f.NewNetShootDeploymentInNS(sy.ClusterA, f.Namespace)
-	fmt.Println("Exported both actual Lighthouse v0.23.4 Deployment pod templates")
+	fmt.Println("Exported both actual Lighthouse Deployment pod templates for", platform)
 }

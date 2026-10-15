@@ -1,0 +1,41 @@
+{
+  "lighthouse_version": "v0.23.4",
+  "lighthouse_commit": "39802358763f6edf93850d1b863fec74aca64d08",
+  "lighthouse_module_sum": "h1:emztnGWwi7uwWb7LakoxE/nyHFyxnA7b+m+v708fuPk=",
+  "candidate_source_sha256": {
+    "test/e2e/framework/deployments.go": "de6ea6cbdfe8f94555203517529e6bdcb64613debcfcd27de8e229eafda6e6e5",
+    "test/unit/framework/deployments_uid_test.go": "5969193f0ca74ac2e95bce9fdfcac3a748e8ce2eab9569c664901670deb49dd1"
+  },
+  "exporter_sha256": "68733015e1a69c247e836aa97070df7dfd5b39d0283b36c77764905ac9222de7",
+  "behavior": "Per target cluster: security.openshift.io advertised in API discovery delegates UID to SCC admission; otherwise explicitly use UID 10000. Discovery errors fail before Deployment creation.",
+  "runtime_qualification": "This preserves plain Kubernetes UID behavior for older root-default images. OpenShift success requires ordinary valid namespace allocation and restricted-v2 access; arbitrary custom SCC policies are not covered.",
+  "template_comparisons": [
+    {
+      "platform": "openshift",
+      "builder": "nginx-demo",
+      "byte_equal_reference": "scc-proof-fixed/nginx-demo.json",
+      "sha256": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b"
+    },
+    {
+      "platform": "openshift",
+      "builder": "netshoot",
+      "byte_equal_reference": "scc-proof-fixed/netshoot.json",
+      "sha256": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0"
+    },
+    {
+      "platform": "kubernetes",
+      "builder": "nginx-demo",
+      "byte_equal_reference": "scc-proof-inputs/nginx-demo.json",
+      "sha256": "da1367f688fa76a3310ff48f0b478028f55ce749a9515c7a8b9837d4dbc91133"
+    },
+    {
+      "platform": "kubernetes",
+      "builder": "netshoot",
+      "byte_equal_reference": "scc-proof-inputs/netshoot.json",
+      "sha256": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2"
+    }
+  ],
+  "unit_command": "GOTMPDIR=/path/with/space GOGC=20 go test -mod=readonly -race -p 1 -v ./test/unit/framework -run '^TestNettest' --ginkgo.v --ginkgo.trace --ginkgo.junit-report /path/to/junit.xml",
+  "lint_command": "golangci-lint run ./test/e2e/framework ./test/unit/framework",
+  "fmt_command": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go"
+}

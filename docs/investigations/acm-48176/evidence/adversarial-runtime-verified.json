@@ -1,0 +1,140 @@
+{
+  "description": "Local rootless Podman/crun container checks; no OpenShift cluster, SCC, kubelet or controller run. Two pinned images, exact Lighthouse helper commands, three UID/GID modes each. CPU/memory flags configured; cgroup limits not independently recorded. Original output verified offline; private resolver details omitted.",
+  "executed_runner_sha256": "b0715b3ca7b681069951a5b645bc626ff246bfb1a19749cb8123d6d4dc1db538",
+  "final_case_runner_sha256": "2a0195a7bb9392956b72407499d9f3b426d3073ab7e7fce8f99d8812adf43100",
+  "execution_note": "The first run verified 11 cases, then the last case timed out during an irrelevant external DNS probe; the final case was rerun using a cleaned runner with explicit local DNS and security assertions. All 12 case outputs are asserted by this verifier.",
+  "cases": [
+    {
+      "case": "community-devel-image-default-netshoot",
+      "verified_uid": 10000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "community-devel-image-default-nginx-demo",
+      "verified_uid": 10000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "community-devel-no-root-group-netshoot",
+      "verified_uid": 1001530000,
+      "verified_gid": 1001530000,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "community-devel-no-root-group-nginx-demo",
+      "verified_uid": 1001530000,
+      "verified_gid": 1001530000,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "community-devel-openshift-like-netshoot",
+      "verified_uid": 1001530000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "community-devel-openshift-like-nginx-demo",
+      "verified_uid": 1001530000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-image-default-netshoot",
+      "verified_uid": 10000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-image-default-nginx-demo",
+      "verified_uid": 10000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-no-root-group-netshoot",
+      "verified_uid": 1001530000,
+      "verified_gid": 1001530000,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-no-root-group-nginx-demo",
+      "verified_uid": 1001530000,
+      "verified_gid": 1001530000,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-openshift-like-netshoot",
+      "verified_uid": 1001530000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 0,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    },
+    {
+      "case": "konflux-0.23.4-openshift-like-nginx-demo",
+      "verified_uid": 1001530000,
+      "verified_gid": 0,
+      "effective_capabilities": "0",
+      "no_new_privileges": true,
+      "seccomp_filter_active": true,
+      "dns_udp_and_tcp_localhost_answers": 2,
+      "verified_http_responses": 8,
+      "read_only_tmp_and_app_shell_checks_passed": true
+    }
+  ]
+}

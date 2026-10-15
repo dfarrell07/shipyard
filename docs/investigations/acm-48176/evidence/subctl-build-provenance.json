@@ -1,0 +1,51 @@
+{
+  "checked_at_utc": "2026-10-15T15:58:04.401340+00:00",
+  "subctl_source_commit": "4b44caa4f6abaf37a303d3da81a367bc8b2b232c",
+  "lighthouse_base_module": "github.com/submariner-io/lighthouse@v0.23.4",
+  "lighthouse_replacement": "local candidate; unreleased",
+  "lighthouse_production_source_sha256": "de6ea6cbdfe8f94555203517529e6bdcb64613debcfcd27de8e229eafda6e6e5",
+  "binary_filename": "subctl-uid-candidate-bin",
+  "binary_sha256": "8c4ed71571848cfffeed356e1d1b7e22c9a7b679acaffc31ae2190e2126e7802",
+  "binary_size_bytes": 147777002,
+  "build_command": "GOGC=20 go build -mod=readonly -buildvcs=false -p 1 -o <local binary> ./cmd",
+  "build_exit_code": 0,
+  "version_smoke_output": "subctl version: devel",
+  "verify_help_smoke_exit_code": 0,
+  "verify_has_image_override_flag": true,
+  "verify_has_nettest_image_flag": false,
+  "verify_has_delete_namespace_flag": false,
+  "selected_build_info": [
+    "path\tgithub.com/submariner-io/subctl/cmd",
+    "mod\tgithub.com/submariner-io/subctl\t(devel)",
+    "dep\tgithub.com/submariner-io/lighthouse\tv0.23.4",
+    "=>\t/home/dfarrell07/go/src/submariner-io/.worktrees/acm-48176/lighthouse-uid-candidate\t(devel)"
+  ],
+  "exports": [
+    {
+      "builder_template": "nginx-demo",
+      "openshift_sha256": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b",
+      "plain_kubernetes_sha256": "da1367f688fa76a3310ff48f0b478028f55ce749a9515c7a8b9837d4dbc91133",
+      "openshift_exactly_matches_admission_checked_template": true,
+      "plain_kubernetes_exactly_matches_original_template": true
+    },
+    {
+      "builder_template": "netshoot",
+      "openshift_sha256": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0",
+      "plain_kubernetes_sha256": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2",
+      "openshift_exactly_matches_admission_checked_template": true,
+      "plain_kubernetes_exactly_matches_original_template": true
+    }
+  ],
+  "limits": "Compile, CLI smoke, module graph, and HTTP-fixture builder exports do not exercise a live Deployment controller, SCC admission, kubelet, or the QE discovery tests. No published dependency pin or delivered executable was changed.",
+  "subctl_only_source_change": "go.mod adds local Lighthouse replacement; all tracked Subctl source matches 4b44caa4",
+  "vcs_stamping": {
+    "disabled": true,
+    "reason": "Installed Go 1.26.8 vcs.FromDir recognizes .git directories but not the worktree .git file. Initial build therefore stamped enclosing workspace repository HEAD 28b69f4f81a870e0ec0b926dd574fc7b64ecaa87 instead of independently checked Subctl worktree HEAD 4b44caa4f6abaf37a303d3da81a367bc8b2b232c. Final build disables that misleading stamp and records actual source identity here.",
+    "installed_toolchain_source": "/usr/lib/golang/src/cmd/go/internal/vcs/vcs.go:214-219 and isVCSRoot near line 640"
+  },
+  "linked_lighthouse_symbols": [
+    "38648e0 T github.com/submariner-io/lighthouse/test/e2e/framework.(*Framework).NewNetShootDeploymentInNS",
+    "3865360 T github.com/submariner-io/lighthouse/test/e2e/framework.(*Framework).NewNginxDeployment",
+    "3865f60 T github.com/submariner-io/lighthouse/test/e2e/framework.nettestRunAsUser"
+  ]
+}

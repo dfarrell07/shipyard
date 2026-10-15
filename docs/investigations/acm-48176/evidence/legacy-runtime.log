@@ -1,0 +1,47 @@
+CASE: community-0.23.2-explicit-10000-netshoot
+uid=10000(10000) gid=0(root) groups=0(root)
+CapEff:	0000000000000000
+NoNewPrivs:	1
+Seccomp:	2
+UDP-DNS-PASS
+TCP-DNS-PASS
+
+CASE: community-0.23.2-explicit-10000-nginx-demo
+uid=10000(10000) gid=0(root) groups=0(root)
+CapEff:	0000000000000000
+NoNewPrivs:	1
+Seccomp:	2
+UDP-DNS-PASS
+TCP-DNS-PASS
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+
+CASE: community-0.23.2-openshift-like-netshoot
+uid=1001530000(1001530000) gid=0(root) groups=0(root)
+CapEff:	0000000000000000
+NoNewPrivs:	1
+Seccomp:	2
+UDP-DNS-PASS
+TCP-DNS-PASS
+
+CASE: community-0.23.2-openshift-like-nginx-demo
+uid=1001530000(1001530000) gid=0(root) groups=0(root)
+CapEff:	0000000000000000
+NoNewPrivs:	1
+Seccomp:	2
+UDP-DNS-PASS
+TCP-DNS-PASS
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World
+Hello World

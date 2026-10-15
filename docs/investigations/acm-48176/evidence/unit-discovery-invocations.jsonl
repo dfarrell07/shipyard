@@ -1,0 +1,2 @@
+["test", "-v", "-race", "-coverprofile", "unit.coverprofile", "./pkg/agent/controller", "./test/unit/framework", "--ginkgo.v", "--ginkgo.trace", "--ginkgo.junit-report", "junit.xml"]
+["tool", "cover", "-func", "unit.coverprofile"]

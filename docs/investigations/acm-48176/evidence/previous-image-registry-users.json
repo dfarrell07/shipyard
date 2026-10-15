@@ -1,0 +1,40 @@
+[
+  {
+    "ref": "quay.io/submariner/nettest:0.23.2",
+    "digest": "sha256:151e4b053fee45626936ccbbdf1a11633d336eb9bc432f8996dd1d45385400ef",
+    "created": "2026-09-08T10:37:59.415140102Z",
+    "architecture": "amd64",
+    "config_user": "",
+    "config_cmd": [
+      "/bin/bash",
+      "-l"
+    ],
+    "config_entrypoint": null,
+    "source_revision": null,
+    "layers": [
+      "sha256:22baefa4d616cd139e7ca968de8e1fac6c81d088a120c292e24845464e933e24",
+      "sha256:60bb2af1c7da6b4f9dd0dbc847a34333323b0e6ae5385b1dbcccaf308cc658b1",
+      "sha256:c04f0ccf1dd9542d46a958650c7eccc7ee680fc0e7a492a2f87a1daf368c0991",
+      "sha256:64b2b6ed024aa576b0ff64ef76b35df15f9bcb33030e6d106d0bbd904851c34a"
+    ]
+  },
+  {
+    "ref": "quay.io/submariner/nettest:0.23.3",
+    "digest": "sha256:666c8ac7fd19be8bfd865d6ff4dc9c9c3a4020142e04e3cff5292a0a7c05f5ef",
+    "created": "2026-09-20T11:21:02.566882272Z",
+    "architecture": "amd64",
+    "config_user": "10000",
+    "config_cmd": [
+      "/bin/bash",
+      "-l"
+    ],
+    "config_entrypoint": null,
+    "source_revision": null,
+    "layers": [
+      "sha256:fed336afe002e57d8a0fecfbb51e6260e4f9bedf8dea825e924d42ec3a4bd071",
+      "sha256:49135d1bfc5edf688948f4fb02613f6d49fe81e954660d56f96aad9965af7807",
+      "sha256:be2f6e18682bae7756b3b55b4c68e1cb899ad1701cb0152e22fdf58e358ea21a",
+      "sha256:fda107103cc4783f72742960a093ab53f52d802ff8217c23e06443dd3a4c9ef1"
+    ]
+  }
+]
