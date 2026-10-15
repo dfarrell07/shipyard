@@ -1,30 +1,32 @@
 # Controller and QE acceptance procedure
 
-Use this after the corrected Lighthouse dependency is in the delivered Subctl artifact. Repeat the original/fixed comparison
-with fresh output directories, unchanged cluster configuration/service-account grants, and the same actual QE nettest digest.
-The digest used in the earlier local container experiments is not established as the failing QE image.
+Run the original Subctl artifact first, then the corrected artifact. Repeat steps 1–3 with fresh output and capture directories for each.
+Use the same QE nettest digest, cluster configuration, namespace labels, and service-account grants for both runs.
+The original run must reproduce the failure and retain causal evidence; its nonzero statuses and checker rejection are expected.
+The successful-exit and all-cases-passed requirements below apply to the corrected artifact.
 
-The **original baseline** is an expected negative control: retain its nonzero exit statuses, original case failures, and
-controller events. The checker should reject those reports. The zero-exit, all-cases-passed requirements below apply to the
-**corrected delivered artifact**. Keep their output directories and artifact identities separate.
+## 1. Prepare the run and capture
 
-## Capture before starting tests
+Set `SUBCTL` to the absolute path of the inspected executable; retain its checksum and module metadata. For containers, retain
+image/platform and embedded executable identities. Set `CTX_A`, `CTX_B`, and `NETTEST_DIGEST_REF` to the target contexts and common
+`registry/repository@sha256:...` reference. The earlier local image experiments do not establish the failing QE digest.
+Create fresh absolute directories `OUT` and `LOCAL_CAPTURE` outside the checkout. Record any existing
+`RELATED_IMAGE_submariner-nettest` value; the commands below remove it because it overrides the CLI image pin.
 
-On **each** context, require successful initial LISTs and established WATCHes for these resources:
+Start collection **before** reproducing either artifact: the suite deletes its namespaces, and Subctl has no preservation flag.
+On each context, collect these resources:
 
 | Resource | Scope |
 | --- | --- |
 | `namespaces` | Label selector `e2e-framework=discovery` |
-| `deployments.apps`, `replicasets.apps`, `pods`, `events` | Each resource separately, across namespaces |
+| `deployments.apps`, `replicasets.apps`, `pods`, `events` | One collector per resource, across namespaces |
 
-Use the read-only [collector](evidence/capture_discovery.go.txt), built against the inspected client-go v0.35.8 graph.
-It takes an initial complete LIST, then resumes watch connections from their last resourceVersion. A normal EOF reconnects;
-HTTP or streamed 410 terminates without relisting, because relisting could hide missed events.
-The [collector checks](evidence/capture-discovery-provenance.json) exercise replay after EOF and terminal/error controls.
+Use the [read-only collector](evidence/capture_discovery.go.txt), tested against client-go v0.35.8.
+It resumes from the last resourceVersion after EOF and fails on expired versions without a gap-hiding relist.
+A single kubectl watch can [exit zero on stream closure](evidence/kubectl-watch-close-results.json).
 
-Set `LOCAL_CAPTURE` to a fresh absolute directory outside the notes checkout. From the investigation directory, copy the
-collector and its tests into a temporary source directory. Then build/test from the inspected Lighthouse or Subctl checkout
-whose Go module selects the recorded client-go version:
+From this investigation directory, copy the collector and tests into a temporary directory. Set `INSPECTED_MODULE_CHECKOUT` to
+the inspected Lighthouse or Subctl checkout selecting that client-go version, then build/test there:
 
 ```bash
 capture_src=$(mktemp -d)
@@ -35,7 +37,7 @@ GOWORK=off go test -mod=readonly -race "$capture_src/capture_discovery.go" "$cap
 GOWORK=off go build -mod=readonly -o "$LOCAL_CAPTURE/capture-discovery" "$capture_src/capture_discovery.go"
 ```
 
-Record that collector binary's checksum and module metadata. Start one process per resource/context, preserving each PID:
+Retain the collector checksum/module metadata. Start each process and save its PID, for example:
 
 ```bash
 "$LOCAL_CAPTURE/capture-discovery" --context "$CTX_A" --resource pods \
@@ -43,40 +45,20 @@ Record that collector binary's checksum and module metadata. Start one process p
 a_pods_pid=$!
 ```
 
-Repeat for all five resources and both contexts. The namespace collector automatically applies `e2e-framework=discovery`;
-the other four resources use all namespaces. `--kubeconfig` is optional; otherwise normal kubeconfig loading applies.
-For a three-context e2e extension, add all five collectors for ClusterC too; ten processes describes the original two-cluster run.
-Keep stdout and stderr local: objects, API errors, and client diagnostics can contain private metadata.
-The JSON output is a stream containing the initial LIST and subsequent object-change events, not one standalone document.
+Repeat for all five resources and both contexts; add five collectors for ClusterC when qualifying a third-context extension.
+The namespace selector is automatic. `--kubeconfig` is optional; normal loading otherwise applies.
+Keep output local because it contains private metadata. Stdout is a JSON stream of the initial LIST and object-change events.
 
-Before testing, require `list_complete` and `watch_established` records for all ten processes, with a finite startup deadline.
-The latter is logged only after the actual watch request is accepted. Preserve readiness records and reconnect resource versions.
-Resource versions are opaque tokens; do not require consecutive numeric values.
-Every collector must remain alive through the runs. Only after tests and final evidence collection finish, send SIGTERM and
-record each process's exit status and `operator_stop` record. A premature exit is invalid even when its status is zero.
-Investigate every request/output error; an unexplained gap or terminal 410 invalidates capture. Do not restart the whole
-collector in a shell loop, because its fresh LIST would hide a gap. Reproduce with fresh capture if continuity was lost.
+Require `list_complete` and `watch_established` records for every process within a finite startup deadline before testing.
+Preserve reconnect records and opaque resourceVersions. Keep all collectors alive until testing and final collection finish;
+then send SIGTERM and require exit zero with an `operator_stop` record. Retain statuses and reject premature exits, output
+failures, expired versions, and unexplained gaps; investigate request errors. Restarting the whole collector would hide a gap
+behind a fresh LIST.
+See [collector checks and provenance](evidence/capture-discovery-provenance.json).
 
-A single `kubectl get --watch` connection is insufficient for the original baseline, which lasts about 58 minutes.
-A [local reproduction](evidence/kubectl-watch-close-results.json) shows kubectl exiting zero on normal watch closure without
-reconnecting. A live PID or successful initial HTTP response therefore does not establish coverage of the full run.
+## 2. Run discovery in both directions
 
-Preserve namespace UID/MCS allocations and the Deployment → ReplicaSet → Pod owner UID chain, service-account identity,
-`openshift.io/scc`, pod/container security contexts, configured image, and imageID. Confirm corrected controller-created pods
-use the expected restricted SCC and a nonzero UID inside the namespace range; an unexpected privileged SCC is not this positive
-control. Where feasible, record `id -u` inside the running helper as well. The automated suite deletes namespaces afterward.
-
-For the first causal proof, retained disposable namespaces and **real Deployments** from the original/fixed builders are useful:
-collect original FailedCreate events and corrected Running pod metadata before manually cleaning those namespaces up.
-Keep their default service accounts/grants unchanged. Direct administrator-created Pods can hide the UID admission failure.
-
-## Run both directions and preserve statuses
-
-Set `SUBCTL` to the absolute path of the inspected delivered executable; record its checksum and module metadata.
-For a container invocation, preserve the equivalent immutable image/architecture and embedded binary identity.
-Set `CTX_A`, `CTX_B`, `OUT`, and `NETTEST_DIGEST_REF` explicitly. `OUT` must be a fresh directory for this artifact/run;
-`NETTEST_DIGEST_REF` must be the selected common `registry/repository@sha256:...` reference.
-Record any existing `RELATED_IMAGE_submariner-nettest` value, then remove it for both commands so it cannot defeat the pin.
+For each artifact, run these commands with its own `SUBCTL`, `OUT`, and active capture:
 
 ```bash
 if env -u 'RELATED_IMAGE_submariner-nettest' "$SUBCTL" verify \
@@ -100,14 +82,24 @@ fi
 printf '%s\n' "$b_to_a_status" > "$OUT/discovery-b-a.exit"
 ```
 
-Preserve the exact commands, context mapping, artifact identity, digest/environment, and collector readiness/exit records.
-Require both Subctl exit codes to be zero. Do not replace those statuses with a successful `tee`, checksum, or parser exit.
-Swapping contexts matters: the tests use fixed ClusterA/ClusterB roles, and Subctl derives its shared image from cluster A.
-Confirm the emitted image reference and running imageID in each direction instead of assuming the same CLI text guarantees it.
+Preserve exact commands, context mapping, artifact identity, image/environment, statuses, and collector records.
+The tests use fixed ClusterA/ClusterB roles, and Subctl derives its shared image from cluster A. Check the emitted image and
+running imageID in each direction. Disable wrapper retries and audit landed specs/Ginkgo configuration for retry or dry-run modes.
 
-## Check the original cases by identity
+## 3. Inspect the controller evidence
 
-From this investigation directory, run:
+Preserve the Deployment → ReplicaSet → Pod owner UIDs, service-account identity, namespace UID/MCS allocations and labels,
+selected `openshift.io/scc`, security contexts, configured image, and running imageID. Use real Deployments: directly creating
+Pods as an administrator can hide the controller's SCC denial.
+
+The original FailedCreate events must explain why helper pods are absent. UID 10000 outside the namespace range confirms this
+proposal; another cause requires revisiting the diagnosis. Corrected helpers must reach Running under the expected restricted
+SCC with a nonzero UID in range. Where feasible, also record `id -u`. An unexpected privileged SCC is insufficient.
+Retained disposable namespaces with the original/fixed Deployments can establish this comparison before suite cleanup.
+
+## 4. Accept the corrected artifact
+
+Require both Subctl exit statuses to be zero. From this investigation directory, run:
 
 ```bash
 python3 evidence/check_discovery_junit.py \
@@ -115,19 +107,10 @@ python3 evidence/check_discovery_junit.py \
   --reports "$OUT/discovery-a-b.xml" "$OUT/discovery-b-a.xml"
 ```
 
-Require exit zero **as well as** both successful Subctl statuses. The checker requires every one of the 14 original case names
-exactly once with status `passed`, without failure/error/skip children, in each report. It rejects additional reported failures,
-suite infrastructure errors, and reported retries/flakes; unrelated original skips are counted separately.
-This prevents a green total from hiding skipped/replaced cases, including ordinary discovery skipped under a changed clusterset-IP
-configuration. Do not enable wrapper retries or accept a flaky rerun as a new pass.
+Require checker exit zero too: every original case must occur exactly once and pass in each report, with no substituted/skipped
+cases, additional failures, or invalid execution metadata. Unrelated skips are recorded separately.
+The pinned JUnit format omits per-case attempt counts; audit source/wrappers for per-spec retries or retain independent attempt
+records. The checker cannot establish artifact identity, context order, capture coverage, or causality.
 
-Require genuine execution metadata: the pinned producer must report `DryRun=false`, `SuiteSucceeded=true`, and no programmatic
-focus or declared suite retries. Its JUnit does not contain per-case attempt counts, so audit the exact landed discovery code
-and wrappers for per-spec retry decorators, or retain separate attempt-count evidence. A final passed status cannot prove this.
-
-The checker cannot establish opposite context order, executable identity, collector coverage, causality, or retries hidden outside
-JUnit. Preserve those records separately. Its self-checks reject the actual attached failing report and adversarial missing,
-duplicate, skipped, substituted, failed, and malformed reports; synthetic passing fixtures are test inputs, not QE evidence.
-
-Do not mark ACM-48176 fixed until the original controller failure is understood and the corrected delivered artifact satisfies
-the controller/SCC/UID, image identity, command status, exact-case, and capture requirements above.
+Close ACM-48176 only when the original controller failure is understood, the corrected delivered artifact produces Running
+helpers under the expected SCC/UID, and all 14 original cases pass in both directions with continuous evidence capture.
