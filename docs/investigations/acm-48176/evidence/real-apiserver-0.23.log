@@ -1,0 +1,5 @@
+    zz_real_apiserver_internal_test.go:35: plain kube-apiserver: runAsUser=10000
+    zz_real_apiserver_internal_test.go:55: kube-apiserver serving security.openshift.io: runAsUser=nil
+    zz_real_apiserver_internal_test.go:62: zero budget failure: ["discover API groups for nettest UID selection\nUnexpected error:\n    <*fmt.wrapError | 0xd9ac3210dc0>: \n    client rate limiter Wait returned an error: context deadline exceeded\n    {\n        msg: \"client rate limiter Wait returned an error: context deadline exceeded\",\n        err: <context.deadlineExceededError>{},\n    }\noccurred" "discover API groups for nettest UID selection: expected APIGroupList, received <nil>\nExpected\n    <bool>: false\nto be true"]
+--- PASS: TestNettestRunAsUserRealAPIServer (0.28s)
+ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.323s

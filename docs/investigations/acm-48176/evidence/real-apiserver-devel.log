@@ -1,0 +1,6 @@
+    zz_envtest_internal_test.go:33: plain kube-apiserver: runAsUser=10000
+    zz_envtest_internal_test.go:53: kube-apiserver serving security.openshift.io: runAsUser=nil
+    zz_envtest_internal_test.go:60: zero budget failure: ["discover API groups for nettest UID selection\nUnexpected error:\n    <context.deadlineExceededError>: \n    context deadline exceeded\n    {}\noccurred" "discover API groups for nettest UID selection: expected APIGroupList, received <nil>\nExpected\n    <bool>: false\nto be true"]
+--- PASS: TestNettestRunAsUserRealAPIServer (0.24s)
+PASS
+ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.295s

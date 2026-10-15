@@ -1,0 +1,6 @@
+On this branch the shared unit runner skips test directories whose `_test.go` files mention `e2e`, so `make unit` does not run
+`test/unit/framework`. Explicit run:
+
+```text
+<paste the output of: GOWORK=off go test -race -count=1 ./test/unit/framework/ --ginkgo.v>
+```

@@ -1,0 +1,4 @@
+#!/bin/bash
+~/.local/share/kubebuilder-envtest/k8s/1.36.2-linux-amd64/etcd --data-dir <scratch>/etcd --listen-client-urls http://127.0.0.1:23790 --advertise-client-urls http://127.0.0.1:23790 --listen-peer-urls http://127.0.0.1:23800 > <scratch>/etcd.log 2>&1 &
+sleep 2
+exec ~/.local/share/kubebuilder-envtest/k8s/1.36.2-linux-amd64/kube-apiserver --etcd-servers http://127.0.0.1:23790 --secure-port 26443 --bind-address 127.0.0.1 --cert-dir <scratch>/certs   --service-account-issuer https://kubernetes.default.svc --service-account-key-file <scratch>/sa.pub --service-account-signing-key-file <scratch>/sa.key   --token-auth-file <scratch>/tokens.csv --authorization-mode RBAC --service-cluster-ip-range 10.0.0.0/24 > <scratch>/kas.log 2>&1
