@@ -61,5 +61,6 @@ Local checks do not establish controller behavior or end-to-end DNS success on t
 3. Decide between a 0.23.4 Subctl respin and 0.23.5, and add a known-issue note for shipped releases.
 4. Verify Running helpers under the expected SCC/UID, then require all 14 original cases to pass in both cluster directions.
 
+Commits for all nine Lighthouse branches are prepared and verified locally; see the [execution runbook](EXECUTION.md).
 Follow the [implementation plan](IMPLEMENTATION.md) for code and delivery, and the [QE procedure](QE-VALIDATION.md) for capture,
 commands, and acceptance. Detailed review history and reproductions remain in the [audit evidence](evidence/RELEVANT-CASES-AUDIT.md).

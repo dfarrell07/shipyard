@@ -1,6 +1,7 @@
 # Implementation plan for ACM-48176
 
-Deliver the [Lighthouse v0.23.4 candidate](evidence/lighthouse-scc.patch) through Subctl's compiled discovery tests.
+Deliver the Lighthouse change through Subctl's compiled discovery tests. Commits for every branch are prepared; see the
+[execution runbook](EXECUTION.md).
 Use isolated checkouts and `GOWORK=off` throughout Go checks and builds.
 Every Lighthouse branch has the defect, so land it on `devel` first and backport it to each maintained branch (section 2).
 
@@ -17,6 +18,9 @@ The helper must:
 3. Return `nil` when a group is named `security.openshift.io`, otherwise `ptr.To(int64(10000))`.
    Assign this to the existing pod-level `SecurityContext.RunAsUser`.
 
+On `devel` and `release-0.25` the builders already take a `ctx`; there the helper is `nettestRunAsUser(ctx, cluster)`, derives
+its timeout context from that `ctx`, and returns `new(int64(10000))` in that branch's Go 1.26 style.
+
 Make the lookup per invocation and target, without a shared cache. SCC admission owns namespace UID selection.
 Retain the image, commands, labels, resources, token setting, `runAsNonRoot`, seccomp, read-only root, dropped capabilities,
 and privilege-escalation setting. The StatefulSet builder needs no change.
@@ -26,22 +30,20 @@ retries obey the operation budget; zero budget fails immediately. Credential pro
 the platform, not SCC grants or policy selection; the OpenShift path assumes restricted-v2 access and valid namespace UID/MCS allocation.
 See the [audited implementation limits](evidence/RELEVANT-CASES-AUDIT.md).
 
-Place regression tests in `test/unit/framework`; the shared unit runner prunes the entire `test/e2e` subtree.
-Exercise the public builders through an HTTP fixture that captures Deployment requests and supplies a Running Pod to finish
-the waiter. This verifies builder output; admission and controller behavior need separate checks. Cover:
+Place regression tests in `test/unit/framework`; the shared unit runner prunes the entire `test/e2e` subtree. Every other
+Lighthouse unit test is a Ginkgo suite, so the prepared commits use a small Ginkgo suite rather than the earlier 436-line
+plain `testing` file. An HTTP fixture serves discovery, captures Deployment POSTs, and returns a Running Pod to finish the waiter.
+For both builders it checks:
 
-- Correct UID and unchanged hardening on mixed A/B/C targets, with only the requested target's discovery counter incremented.
-- HTTP 403/503, invalid/missing/wrong-type bodies, canceled requests, and zero budget: expected failure and zero Deployment POSTs.
-  A correctly typed empty APIGroupList is valid and retains UID 10000.
-- Authentication, legacy JSON negotiation, and the operation deadline; retain the proxy-prefix fixture check.
-- Serial, synchronized fixtures that restore clients and globals. Copy TestContext before changing its primitive fields; install a
-  fresh Gomega instance and restore the saved instance afterward. Return typed Status errors and assert the intended failure.
+- UID unset on the cluster serving `security.openshift.io`, UID 10000 on the other, one lookup per target, hardening unchanged.
+- HTTP 403 and a non-`APIGroupList` body fail before any Deployment POST.
+- A stalled discovery request fails within the operation timeout.
 
-Run the shuffled repeated package tests with `-race`, lint/format both changed packages, and run normal `make unit` and applicable
-e2e CI. Confirm unit logs include `./test/unit/framework`. Re-export both platforms after any candidate change: OpenShift output
-must match the admission-checked no-UID templates; Kubernetes output must match the original templates.
-The [candidate checks](evidence/candidate-provenance.json) and [complete host unit run](evidence/full-unit-provenance.json) pass;
-landing CI/container validation remains required.
+Each test fails against a plausible wrong implementation: the original code, always querying cluster A, falling back to 10000
+on errors, unbounded discovery, or dropped `runAsNonRoot`. A real kube-apiserver run covers what a fixture cannot: the
+unprivileged default discovery role, real `APIGroupList` decoding, and classification via a served `security.openshift.io` group.
+The earlier candidate's exhaustive fixture cases (proxy prefix, malformed bodies, exec credentials) remain reviewable in
+[the candidate patch](evidence/lighthouse-scc.patch). The [execution runbook](EXECUTION.md) lists results per branch.
 
 ## 2. Land on every affected branch
 
