@@ -1,0 +1,20 @@
+diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.go
+index 479d16db..60eb4d5f 100644
+--- a/test/e2e/framework/deployments.go
++++ b/test/e2e/framework/deployments.go
+@@ -60,7 +60,6 @@ func (f *Framework) NewNetShootDeploymentInNS(cluster framework.ClusterIndex, na
+ 					AutomountServiceAccountToken: ptr.To(false),
+ 					SecurityContext: &corev1.PodSecurityContext{
+ 						RunAsNonRoot: ptr.To(true),
+-						RunAsUser:    ptr.To(int64(10000)),
+ 						SeccompProfile: &corev1.SeccompProfile{
+ 							Type: corev1.SeccompProfileTypeRuntimeDefault,
+ 						},
+@@ -120,7 +119,6 @@ func (f *Framework) NewNginxDeployment(cluster framework.ClusterIndex) *corev1.P
+ 					AutomountServiceAccountToken: ptr.To(false),
+ 					SecurityContext: &corev1.PodSecurityContext{
+ 						RunAsNonRoot: ptr.To(true),
+-						RunAsUser:    ptr.To(int64(10000)),
+ 						SeccompProfile: &corev1.SeccompProfile{
+ 							Type: corev1.SeccompProfileTypeRuntimeDefault,
+ 						},

@@ -1,0 +1,36 @@
+diff --git a/scripts/shared/resources/dummypod.yaml b/scripts/shared/resources/dummypod.yaml
+index 8a2a56e9..ca99fe8f 100644
+--- a/scripts/shared/resources/dummypod.yaml
++++ b/scripts/shared/resources/dummypod.yaml
+@@ -16,7 +16,6 @@ spec:
+       automountServiceAccountToken: false
+       securityContext:
+         runAsNonRoot: true
+-        runAsUser: 10000
+         seccompProfile:
+           type: RuntimeDefault
+       tolerations:
+diff --git a/scripts/shared/resources/netshoot.yaml b/scripts/shared/resources/netshoot.yaml
+index a3ecc960..325813b7 100644
+--- a/scripts/shared/resources/netshoot.yaml
++++ b/scripts/shared/resources/netshoot.yaml
+@@ -16,7 +16,6 @@ spec:
+       automountServiceAccountToken: false
+       securityContext:
+         runAsNonRoot: true
+-        runAsUser: 10000
+         seccompProfile:
+           type: RuntimeDefault
+       containers:
+diff --git a/scripts/shared/resources/nginx-demo.yaml b/scripts/shared/resources/nginx-demo.yaml
+index da899083..892e4659 100644
+--- a/scripts/shared/resources/nginx-demo.yaml
++++ b/scripts/shared/resources/nginx-demo.yaml
+@@ -16,7 +16,6 @@ spec:
+       automountServiceAccountToken: false
+       securityContext:
+         runAsNonRoot: true
+-        runAsUser: 10000
+         seccompProfile:
+           type: RuntimeDefault
+       containers:

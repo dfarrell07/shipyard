@@ -1,0 +1,12 @@
+--- FAIL: TestThroughputPodsHaveWritableScratchSpace (0.01s)
+    network_pods_internal_test.go:62: 
+        Expected
+            <[]v1.VolumeMount | len:0, cap:0>: nil
+        to contain element matching
+            <*matchers.HaveFieldMatcher | 0x3022ab4982e0>: {
+                Field: "MountPath",
+                Expected: <string>"/tmp",
+            }
+FAIL
+FAIL	github.com/submariner-io/shipyard/test/e2e/framework	0.023s
+FAIL

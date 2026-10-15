@@ -1,0 +1,50 @@
+[
+  {
+    "case": "konflux-0.23.4-server-tmp-False-client-tmp-False",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "konflux-0.23.4-server-tmp-True-client-tmp-False",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "konflux-0.23.4-server-tmp-False-client-tmp-True",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "konflux-0.23.4-server-tmp-True-client-tmp-True",
+    "exit_code": 0,
+    "expected_pass": true
+  },
+  {
+    "case": "konflux-0.23.4-arbitrary-uid-http-dns",
+    "exit_code": 0
+  },
+  {
+    "case": "community-devel-server-tmp-False-client-tmp-False",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "community-devel-server-tmp-True-client-tmp-False",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "community-devel-server-tmp-False-client-tmp-True",
+    "exit_code": 1,
+    "expected_pass": false
+  },
+  {
+    "case": "community-devel-server-tmp-True-client-tmp-True",
+    "exit_code": 0,
+    "expected_pass": true
+  },
+  {
+    "case": "community-devel-arbitrary-uid-http-dns",
+    "exit_code": 0
+  }
+]
