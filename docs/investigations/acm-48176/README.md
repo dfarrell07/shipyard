@@ -2,6 +2,7 @@
 
 Fix the UID selection in Lighthouse's `NewNginxDeployment` and `NewNetShootDeploymentInNS`, then rebuild Subctl with that change.
 The [candidate patch](evidence/lighthouse-scc.patch) is ready for review against Lighthouse v0.23.4.
+Every Lighthouse branch has the same defect, and ACM-48194 is a duplicate report of it.
 This branch contains the plan, candidate, and evidence; the release change and live QE qualification remain outstanding.
 
 ## Proposed fix
@@ -23,21 +24,28 @@ These builders are compiled into Subctl. Updating an image or Shipyard YAML does
 ## Why this fits the report
 
 The attached `e2e.zip` shows 14 failures during helper Deployment setup, before DNS assertions: ten find zero `nginx-demo` pods,
-and four find zero `netshoot` pods. A StatefulSet using the same configured image is already Running in the local case's namespace.
-This points toward helper pod creation rather than an image-wide failure. See the [attachment analysis](evidence/attachment-analysis.json).
+and four find zero `netshoot` pods. Every helper Deployment in the run failed, on both the 4.19 and 4.20 clusters. Every StatefulSet
+reached Running in the same namespaces, with the same image, service account, and `nginx-demo` command but no securityContext.
+Zero matching Pod objects means no helper Pod was admitted; the image did not crash. See the [attachment analysis](evidence/attachment-analysis.json)
+and the [third audit](evidence/THIRD-AUDIT.md#re-derived-from-the-attachment).
 
 Glasswing hardening fixed these builders' UID at 10000. OpenShift SCC admission can reject that UID outside the namespace range;
 the offline admission checks reproduce rejection and successful SCC defaulting after the correction. Passing directly created
 connectivity Pods do not validate the ReplicaSet controller's SCC permissions.
 
+The hardened builders first shipped in 0.23.2, which never reached production, so no earlier QE pass contradicts this. The second
+attempt fixed only Shipyard's CI YAMLs, which `subctl verify` does not use.
+
 **UID rejection remains the leading explanation, not a confirmed QE admission event.** The archive lacks ReplicaSet events,
-selected SCCs, namespace allocations, the exact nettest digest, and the executable checksum.
+selected SCCs, namespace allocations, the exact nettest digest, and the executable checksum. The QE procedure's first step
+reproduces the controller failure in minutes with the [exact original Deployments](evidence/repro/original).
 
 ## Validation so far
 
 | Check | Result and evidence |
 | --- | --- |
 | OpenShift admission and namespace allocation | 66 expected outcomes on pinned 4.19/4.20 code: [admission audit](evidence/EXPERT-AUDIT.md) |
+| Exact Deployments and nonroot-v2 control | Original rejected, corrected and nonroot-v2-granted admitted: [third audit](evidence/THIRD-AUDIT.md) |
 | Current and legacy images | 18 local runtime cases, 72 HTTP responses: [coverage and limits](evidence/RELEVANT-CASES-AUDIT.md) |
 | Shared unit runner | Six packages pass with race detection, 291 Ginkgo specs plus builder regressions: [summary](evidence/full-unit-summary.log) |
 | Subctl integration | Fresh build, module inspection, CLI smoke, and template comparisons pass: [provenance](evidence/subctl-validated-build-provenance.json) |
@@ -48,9 +56,10 @@ Local checks do not establish controller behavior or end-to-end DNS success on t
 
 ## Remaining steps
 
-1. Capture the original helper Deployments' controller events and establish the actual failure cause.
-2. Land the Lighthouse correction on `release-0.23`, pin it in Subctl, and build the delivered artifact.
-3. Verify Running helpers under the expected SCC/UID, then require all 14 original cases to pass in both cluster directions.
+1. Have QE run the scratch-namespace reproduction on both clusters to establish the actual failure cause.
+2. Land the Lighthouse correction on `devel` and every affected release branch, pin it in Subctl, and build the delivered artifact.
+3. Decide between a 0.23.4 Subctl respin and 0.23.5, and add a known-issue note for shipped releases.
+4. Verify Running helpers under the expected SCC/UID, then require all 14 original cases to pass in both cluster directions.
 
 Follow the [implementation plan](IMPLEMENTATION.md) for code and delivery, and the [QE procedure](QE-VALIDATION.md) for capture,
 commands, and acceptance. Detailed review history and reproductions remain in the [audit evidence](evidence/RELEVANT-CASES-AUDIT.md).
