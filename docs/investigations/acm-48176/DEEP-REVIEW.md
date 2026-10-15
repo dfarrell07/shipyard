@@ -98,7 +98,11 @@ of the combined plan, implementation, validation, and rollout.
    `test/e2e/framework` and ran it directly. However, the shared unit runner prunes the `test/e2e` directory containing RunE2ETests,
    including its descendants. [The recorded selection analysis](evidence/unit-selection-before.json) shows the new test would be
    skipped by `make unit`. Direct success was real; automatic CI protection was not yet established. This is the same kind of coverage
-   overstatement the investigation is meant to prevent, and it requires a build-target correction.
+   overstatement the investigation is meant to prevent. The follow-up adds a Shipyard-only `unit-framework` prerequisite to `unit`,
+   without changing the shared runner used by other repositories. The [expanded target](evidence/unit-target-after.log) and
+   [executed target](evidence/unit-framework-target.log) demonstrate the connection. Local `make unit` passes, while its existing
+   deliberate `TEST_ARGS=--fail` check still fails as expected. These runs use the inside-Dapper make configuration on the host;
+   they are not a claim of a fresh remote CI or OpenShift run.
 
 ## How to keep the next correction falsifiable
 

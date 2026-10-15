@@ -1,0 +1,20 @@
+Checking if Makefile.dapper is up to date
+Checking if Makefile.shipyard is up to date
+Checking if Dockerfile.dapper is up to date
+Checking if Dockerfile.linting is up to date
+go test ./test/e2e/framework
+--- FAIL: TestThroughputClientRetryExitStatus (0.49s)
+    --- FAIL: TestThroughputClientRetryExitStatus/all_attempts_fail (0.20s)
+        network_pods_internal_test.go:184: 
+            exhausted retries must fail
+            Expected an error to have occurred.  Got:
+                <nil>: nil
+    --- FAIL: TestThroughputClientRetryExitStatus/no_attempts (0.07s)
+        network_pods_internal_test.go:184: 
+            exhausted retries must fail
+            Expected an error to have occurred.  Got:
+                <nil>: nil
+FAIL
+FAIL	github.com/submariner-io/shipyard/test/e2e/framework	0.717s
+FAIL
+make: *** [Makefile:49: unit-framework] Error 1

@@ -41,6 +41,13 @@ endif
 package/.image.shipyard-dapper-base: ;
 
 # Project-specific targets go here
+# The shared unit runner prunes test/e2e, including its framework unit tests.
+unit: unit-framework
+
+.PHONY: unit-framework
+unit-framework:
+	$(GO) test ./test/e2e/framework
+
 deploy: package/.image.nettest
 
 e2e: clusters package/.image.nettest
