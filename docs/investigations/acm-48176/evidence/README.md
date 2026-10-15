@@ -5,7 +5,7 @@
 | The attached QE run fails 14 cases at helper setup; every helper Deployment gets zero pods; every StatefulSet runs | [attachment-analysis.json](attachment-analysis.json), [provenance.json](provenance.json) |
 | These are the exact Deployments the v0.23.4 builders create | [repro/original](repro/original), from [export-deployments.go.txt](export-deployments.go.txt) |
 | SCC admission rejects the original, admits the corrected version, and a nonroot-v2 grant admits the original | [admission-check.go.txt](admission-check.go.txt), [admission-check.log](admission-check.log) |
-| The 0.23.2 nettest image defaults to root; 0.23.3 and later use UID 10000 | [image-users.json](image-users.json) |
+| Nettest images before v0.22.2, v0.23.3, and v0.24.2 default to root | [image-users.json](image-users.json) for 0.23.x; `USER 10000` first appears in those Shipyard tags' `Dockerfile.nettest` |
 | The hardened helpers work under an arbitrary UID with a read-only root and no capabilities | [runtime-check.py](runtime-check.py), [runtime-results.json](runtime-results.json) |
 | The helper classifies a real kube-apiserver correctly as an unprivileged user | [real-apiserver-check.go.txt](real-apiserver-check.go.txt), [devel log](real-apiserver-devel.log), [0.23 log](real-apiserver-0.23.log) |
 | Every branch builds, passes, and fails on its original code | [branch-verification.log](branch-verification.log) |

@@ -38,10 +38,12 @@ For each target cluster, the builders query API discovery:
 | Serves the `security.openshift.io` API group | Unset; SCC admission assigns a UID from the namespace range |
 | Anything else | 10000, as today |
 
-Plain Kubernetes keeps 10000 because Subctl uses the nettest image of the deployed Submariner version. The 0.23.2 image
-defaults to root (0.23.3 and later use 10000; see [image users](evidence/image-users.json)), and without an explicit UID
-`runAsNonRoot` would reject it. Discovery retries transient errors within the operation timeout and otherwise fails the test.
-All other hardening is unchanged.
+Plain Kubernetes keeps 10000 because Subctl uses the nettest image of the deployed Submariner version, and every nettest image
+before v0.22.2, v0.23.3, and v0.24.2 defaults to root ([image users](evidence/image-users.json); Shipyard's `Dockerfile.nettest`).
+Without an explicit UID, `runAsNonRoot` would reject those images when a new Subctl verifies a cluster not yet upgraded, the
+usual upgrade order. Simply deleting the UID, as Shipyard did for its CI YAMLs, would break that case.
+
+Discovery retries transient errors within the operation timeout and otherwise fails the test. All other hardening is unchanged.
 
 The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No image or operator change is needed.
 
