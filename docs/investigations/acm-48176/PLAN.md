@@ -25,7 +25,8 @@ follows each branch's framework API:
 | `release-0.19`–`release-0.21` | As above, with the pre-generics `AwaitUntil` and a type assertion |
 | `release-0.18` | As above, computing the timeout itself; Shipyard v0.18.5 lacks `OperationTimeoutToDuration()` |
 
-The commit adds a Ginkgo suite in `test/unit/framework`, because the shared unit runner skips `test/e2e`. An HTTP fixture serves
+On `devel` and `release-0.23`–`0.25`, the commit adds a Ginkgo suite in `test/unit/framework`, because the shared unit runner
+skips `test/e2e`. An HTTP fixture serves
 discovery, records created Deployments, and reports a Running pod so the builder's wait completes. For both builders it checks:
 
 - per-cluster selection: UID unset on the OpenShift cluster, 10000 on the other, one lookup each, hardening unchanged;
@@ -35,10 +36,10 @@ discovery, records created Deployments, and reports a Running pod so the builder
 
 ## Verification
 
-All nine branches build, and the suite passes 10/10 with `-race` and randomized order. Every spec fails against the branch's
-original code ([log](evidence/branch-verification.log)). Lint is clean on 0.19–0.25, ignoring pre-existing findings in untouched
-files. 0.18 uses a v1 lint config, so its branch CI is the lint check. On `devel` the suite also rejects five plausible wrong
-implementations:
+All nine branches build. The suite passed 10/10 with `-race` and randomized order on every branch, including 0.18–0.22 before it
+was dropped there, and every spec fails against the branch's original code ([log](evidence/branch-verification.log)). Lint is
+clean on 0.19–0.25, ignoring pre-existing findings in untouched files. 0.18 uses a v1 lint config, so its branch CI is the lint
+check. On `devel` the suite also rejects five plausible wrong implementations:
 
 - always querying cluster A;
 - falling back to 10000 on errors;
@@ -58,10 +59,9 @@ The commits are per-branch ports, not cherry-picks of a merged `devel` commit, s
 The original hardening went the same way (#2228–#2235). Merge `release-0.23`, `release-0.22`, and `release-0.24` first: their
 downstream releases are waiting on this fix. If review changes the code, apply the change to each variant and re-export the patches.
 
-On `release-0.18`–`0.22`, the shared unit runner also skips any test directory whose test files mention `e2e`. The new suite
-imports a `test/e2e` package, so on those branches `make unit` does not run it, and their PRs include an explicit test run
-instead. If reviewers would rather not carry a suite that CI cannot run on those branches, drop the test files from those five
-PRs; the production change is identical either way.
+The `release-0.18`–`0.22` commits change only `deployments.go`. Their shared unit runner skips any test directory whose test files
+mention `e2e`, and the suite imports a `test/e2e` package, so CI there could never run it. Their PR bodies point to the `devel`
+PR for the regression tests.
 
 The 0.18–0.21 branches carry the bug, but no Subctl built from them includes it: their Subctl branches pin pre-hardening
 Lighthouse. Fixing them now keeps the next tag clean; they are lower priority.
@@ -98,8 +98,8 @@ For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only 
 ## Publishing commands (developer)
 
 The branches are already pushed to `dfarrell_lh`; the loop's push only matters if a commit changes. The loop uses the
-[shared PR body](evidence/lighthouse-branches/pr-body.txt), appends the explicit test run on `release-0.18`–`0.22`, and stops at
-the first failure.
+[shared PR body](evidence/lighthouse-branches/pr-body.txt). On `release-0.18`–`0.22` it replaces the test paragraph with a pointer
+to the `devel` PR. It stops at the first failure.
 
 ~~~bash
 ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence/lighthouse-branches
@@ -110,11 +110,10 @@ for b in devel release-0.25 release-0.24 release-0.23 release-0.22 release-0.21 
   grep -v "^$session" "$ev/pr-body.txt" > "$body"
   case $b in
   release-0.1[89] | release-0.2[012])
-    out=$(GOWORK=off go test -v -race -count=1 ./test/unit/framework/ --ginkgo.no-color 2>&1) || { echo "$b: tests failed"; break; }
-    printf '\nOn this branch the shared unit runner skips test directories whose `_test.go` files mention `e2e`,\n'
-    printf 'so `make unit` does not run `test/unit/framework`. Explicit run:\n\n```text\n%s\n```\n' "$(grep -E '^Ran |^SUCCESS|^ok' <<<"$out")"
+    sed -i '/^The new Ginkgo suite/,/^$/d' "$body"
+    printf '\nThis branch has the code change only: its unit runner skips the regression suite, which is in the `devel` PR.\n' >> "$body"
     ;;
-  esac >> "$body"
+  esac
   printf '\n%s\n' "$session" >> "$body"
   git push dfarrell_lh "nettest-scc-uid-$b" &&
     gh pr create --repo submariner-io/lighthouse --base "$b" --head "dfarrell07:nettest-scc-uid-$b" \

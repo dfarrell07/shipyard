@@ -1,5 +1,6 @@
 # GOWORK=off; Go 1.26.8; golangci-lint 2.11.3 (lint counts exclude pre-existing findings in untouched framework.go and
 # service_discovery.go). "original-code" swaps in the branch's original deployments.go and reruns the suite.
+# The suite was later dropped from release-0.18..0.22, whose commits now change only deployments.go; those branches still build.
 devel         build=ok lint=0 test=10 Passed | 0 Failed (3 randomized -race runs) original-code=0 Passed | 10 Failed
 release-0.25  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
 release-0.24  build=ok lint=0 test=10 Passed | 0 Failed original-code=0 Passed | 10 Failed
