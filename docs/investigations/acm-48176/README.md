@@ -1,6 +1,7 @@
 # ACM-48176: nettest helper pods rejected on OpenShift
 
-**Status:** diagnosed offline; fix committed locally for all nine Lighthouse branches, not yet pushed; QE confirmation pending.
+**Status:** diagnosed offline; fix pushed to `dfarrell07/lighthouse` as `nettest-scc-uid-<branch>` for all nine branches, PRs not
+opened; QE confirmation pending.
 ACM-48194 is a duplicate.
 
 ## What fails

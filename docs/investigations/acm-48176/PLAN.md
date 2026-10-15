@@ -95,7 +95,7 @@ For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only 
 
 ## Publishing commands (developer)
 
-Review each worktree's commit first. The loop uses the [shared PR body](evidence/lighthouse-branches/pr-body.txt). It appends
+The branches are already pushed to `dfarrell_lh`, so the loop's push is a no-op unless a commit changes. The loop uses the [shared PR body](evidence/lighthouse-branches/pr-body.txt). It appends
 the explicit test run on `release-0.18`–`0.22` and stops at the first failure.
 
 ~~~bash
