@@ -1,0 +1,69 @@
+{
+  "kind": "Deployment",
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "name": "nginx-demo"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "nginx-demo"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "nginx-demo"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "nginx-demo",
+            "image": "NETTEST_IMAGE",
+            "command": [
+              "/app/simpleserver"
+            ],
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "500m",
+                "memory": "256Mi"
+              },
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            },
+            "imagePullPolicy": "Always",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ],
+        "restartPolicy": "Always",
+        "automountServiceAccountToken": false,
+        "securityContext": {
+          "runAsUser": 10000,
+          "runAsNonRoot": true,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        }
+      }
+    },
+    "strategy": {}
+  },
+  "status": {}
+}

@@ -1,0 +1,76 @@
+{
+  "attachment": {
+    "id": "1249936",
+    "sha256": "5aa980c20413acac012b2913fa9522083ce2559a192b54e986d22f7964cf1a47",
+    "retrieval": "Fresh authenticated Jira attachment content API download on 2026-10-15; matches attachment-analysis.json"
+  },
+  "helper_outcomes_by_cluster": {
+    "submqe-azure (OpenShift 4.19)": {
+      "nginx-demo Deployment": {
+        "created": 6,
+        "zero_pods": 6
+      },
+      "Nginx StatefulSet": {
+        "created": 3,
+        "running": 3
+      }
+    },
+    "submqe-gcp (OpenShift 4.20)": {
+      "nginx-demo Deployment": {
+        "created": 4,
+        "zero_pods": 4
+      },
+      "netshoot Deployment": {
+        "created": 4,
+        "zero_pods": 4
+      },
+      "Nginx StatefulSet": {
+        "created": 1,
+        "running": 1
+      }
+    }
+  },
+  "manifests": {
+    "generator": "export-deployments.go.txt run inside an extracted github.com/submariner-io/lighthouse v0.23.4 tree (git archive v0.23.4, commit 39802358763f6edf93850d1b863fec74aca64d08)",
+    "original_differs_from_corrected_only_by": "spec.template.spec.securityContext.runAsUser",
+    "sha256": {
+      "repro/original/nginx-demo.json": "dc6f5173cf63c85c8e28e86e8ddc5c53cabeb5aecb1b81b44354072044f9ab38",
+      "repro/original/netshoot.json": "37461ad7206d872d59ef86e8fc0da122e8194a9bec449a5ff19d488f867b1ef6",
+      "repro/corrected/nginx-demo.json": "939a9827863aa1ab27091feb32b393f8158ef543fcae9db3c2211ea82dc31530",
+      "repro/corrected/netshoot.json": "1a5f07b6923671057157bed0b52179e37d0b748e0f0a3b5d0d3d92259f719a33"
+    }
+  },
+  "admission_check": {
+    "library": "github.com/openshift/apiserver-library-go f0d44ef6e53b49bd864c035752191a85b293af14 (same pin as admission-provenance.json)",
+    "policies_commit": "openshift/cluster-kube-apiserver-operator 3915db668832c6d730f0ba4fe87604564204ff46 bindata/bootkube/scc-manifests",
+    "policy_sha256": {
+      "restricted-v2": "c68fbfc04cf0373b800a36e3bdc7559ce1f3868a6d083fef5dc50e0d5e1d8d8e",
+      "restricted-v3": "da24fe60815949b46e754ee127b33572ebf31f4bd5a719048fa501ab106f389d",
+      "anyuid": "d9d26ad6a6c673557944f50ac9906d9244388be973db34065d48a50509594767",
+      "privileged": "b937b3aec8125a8c0d462c26787c445c85550bc8ef5eefb2e32e2e4b7616583e",
+      "nonroot-v2": "ccf6467b8917421c224c4d08cda991d3270e12da649ac01fc12105582d08c4d9"
+    },
+    "source": "admission-nonroot-check.go.txt, copied to pkg/securitycontextconstraints/sccadmission/ and run with ACM_AUDIT_DIR containing scc/*.yaml and manifests/{original,corrected}",
+    "command": "GOWORK=off GOFLAGS=-mod=vendor go test -vet=off ./pkg/securitycontextconstraints/sccadmission -run TestACM48176Audit3 -v -count=1",
+    "log": "admission-nonroot-check.log",
+    "requester": "system:serviceaccount:kube-system:replicaset-controller",
+    "namespace_uid_range_fixture": "1001530000/10000"
+  },
+  "backport_checks": {
+    "candidate_patch_applies_cleanly": [
+      "release-0.18",
+      "release-0.19",
+      "release-0.20",
+      "release-0.21",
+      "release-0.22",
+      "release-0.23"
+    ],
+    "candidate_patch_needs_adaptation": [
+      "devel",
+      "release-0.25",
+      "release-0.24"
+    ],
+    "release-0.18_go_vet": "fails: shipyard v0.18.5 TestContextType has no OperationTimeoutToDuration",
+    "release-0.22_go_vet": "passes for test/e2e/framework and test/unit/framework"
+  }
+}

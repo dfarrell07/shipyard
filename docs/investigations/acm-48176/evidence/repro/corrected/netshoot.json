@@ -1,0 +1,67 @@
+{
+  "kind": "Deployment",
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "generateName": "netshoot",
+    "labels": {
+      "run": "netshoot"
+    }
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "netshoot"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "netshoot"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "netshoot",
+            "image": "NETTEST_IMAGE",
+            "command": [
+              "sleep",
+              "600"
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "500m",
+                "memory": "256Mi"
+              },
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            },
+            "imagePullPolicy": "Always",
+            "securityContext": {
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ],
+        "restartPolicy": "Always",
+        "automountServiceAccountToken": false,
+        "securityContext": {
+          "runAsNonRoot": true,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        }
+      }
+    },
+    "strategy": {}
+  },
+  "status": {}
+}

@@ -1,0 +1,60 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+
+	"github.com/onsi/gomega"
+	lh "github.com/submariner-io/lighthouse/test/e2e/framework"
+	sy "github.com/submariner-io/shipyard/test/e2e/framework"
+	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+)
+
+// Captures the exact Deployment objects the Lighthouse builders POST.
+func main() {
+	out := os.Args[1]
+	gomega.RegisterFailHandler(func(message string, _ ...int) { panic(message) })
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost {
+			dep := &apps.Deployment{}
+			if err := json.NewDecoder(r.Body).Decode(dep); err != nil {
+				panic(err)
+			}
+			dep.TypeMeta = meta.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"}
+			name := dep.Name
+			if name == "" {
+				name = dep.GenerateName
+			}
+			dep.Namespace = ""
+			data, _ := json.MarshalIndent(dep, "", "  ")
+			if err := os.WriteFile(filepath.Join(out, name+".json"), append(data, '\n'), 0o644); err != nil {
+				panic(err)
+			}
+			_ = json.NewEncoder(w).Encode(dep)
+			return
+		}
+		pods := &v1.PodList{TypeMeta: meta.TypeMeta{APIVersion: "v1", Kind: "PodList"},
+			Items: []v1.Pod{{ObjectMeta: meta.ObjectMeta{Name: "ready"}, Status: v1.PodStatus{Phase: v1.PodRunning}}}}
+		_ = json.NewEncoder(w).Encode(pods)
+	}))
+	defer server.Close()
+	client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL, ContentConfig: rest.ContentConfig{ContentType: "application/json"}})
+	if err != nil {
+		panic(err)
+	}
+	sy.KubeClients = []*kubernetes.Clientset{client}
+	sy.TestContext.OperationTimeout = 5
+	sy.TestContext.NettestImageURL = "NETTEST_IMAGE"
+	f := &lh.Framework{Framework: sy.NewBareFramework("repro")}
+	f.Namespace = "repro"
+	f.NewNginxDeployment(sy.ClusterA)
+	f.NewNetShootDeploymentInNS(sy.ClusterA, f.Namespace)
+}
