@@ -429,6 +429,13 @@ func (np *NetworkPod) buildThroughputClientPod(ctx context.Context) {
 			AutomountServiceAccountToken: new(bool),
 			Affinity:                     np.nodeAffinity(ctx, np.Config.Scheduling),
 			RestartPolicy:                v1.RestartPolicyNever,
+			// iperf3 uses temporary files for its stream buffers, even on a read-only root filesystem.
+			Volumes: []v1.Volume{{
+				Name: "tmp",
+				VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{
+					SizeLimit: resource.NewQuantity(64*1024*1024, resource.BinarySI),
+				}},
+			}},
 			Containers: []v1.Container{
 				{
 					Name:            "nettest-client-pod",
@@ -450,6 +457,7 @@ func (np *NetworkPod) buildThroughputClientPod(ctx context.Context) {
 					},
 					SecurityContext: podSecurityContext,
 					Resources:       throughputResources,
+					VolumeMounts:    []v1.VolumeMount{{Name: "tmp", MountPath: "/tmp"}},
 				},
 			},
 			Tolerations: []v1.Toleration{{Operator: v1.TolerationOpExists}},
@@ -476,6 +484,13 @@ func (np *NetworkPod) buildThroughputServerPod(ctx context.Context) {
 			AutomountServiceAccountToken: new(bool),
 			Affinity:                     np.nodeAffinity(ctx, np.Config.Scheduling),
 			RestartPolicy:                v1.RestartPolicyNever,
+			// iperf3 uses temporary files for its stream buffers, even on a read-only root filesystem.
+			Volumes: []v1.Volume{{
+				Name: "tmp",
+				VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{
+					SizeLimit: resource.NewQuantity(64*1024*1024, resource.BinarySI),
+				}},
+			}},
 			Containers: []v1.Container{
 				{
 					Name:            "nettest-server-pod",
@@ -487,6 +502,7 @@ func (np *NetworkPod) buildThroughputServerPod(ctx context.Context) {
 					},
 					SecurityContext: podSecurityContext,
 					Resources:       throughputResources,
+					VolumeMounts:    []v1.VolumeMount{{Name: "tmp", MountPath: "/tmp"}},
 				},
 			},
 			Tolerations: []v1.Toleration{{Operator: v1.TolerationOpExists}},
