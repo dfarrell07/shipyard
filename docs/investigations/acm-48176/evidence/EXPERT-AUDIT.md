@@ -27,13 +27,14 @@ Sources: [Subctl version check](https://github.com/submariner-io/subctl/blob/4b4
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| OpenShift 4.20 mutation and validation | 32 expected outcomes reproduced, using shipped SCCs | [Original check and reproduction](ADMISSION-CHECK.md) |
+| OpenShift 4.20 mutation and validation | 32 expected outcomes reproduced, using shipped SCCs | [Independent rerun](admission-4.20-audit.log), [original check and reproduction](ADMISSION-CHECK.md) |
 | OpenShift 4.19 mutation and validation | 24 expected outcomes passed, using shipped SCCs without v3 | [Results](admission-4.19-results.json), [log](admission-4.19-check.log), [source](admission-4.19-check.go.txt), [provenance](admission-4.19-provenance.json) |
 | Namespace allocation counterexamples | 10 expected outcomes: normal allocation and supplemental-group fallback work; missing UID/MCS fails | [Results](admission-namespace-controls.json), [source](admission-namespace-check.go.txt), [provenance](admission-namespace-provenance.json) |
 | Current-image runtime | 12 cases passed; exact helper commands, both pinned images, default UID/high UID/high UID with non-root group | [Verified results](adversarial-runtime-verified.json), [filtered output](adversarial-runtime-filtered.log), [clean reproducer](adversarial_runtime_audit.publishable.py) |
 | Legacy 0.23.2 runtime | Four cases passed: both helper commands at UID 10000 and UID 1001530000 | [Results](legacy-runtime-results.json), [output](legacy-runtime.log), [reproducer](legacy_runtime_audit.py) |
 | Final candidate's emitted templates | OpenShift outputs exactly match validated no-UID templates; Kubernetes outputs exactly match original explicit-UID templates | [Byte comparisons and hashes](candidate-template-comparison.json) |
 | Default unit-runner test discovery | Actual shared runner selects `test/unit/framework`; it prunes `test/e2e` | [Enumeration log](unit-discovery.log), [recorded Go arguments](unit-discovery-invocations.jsonl) |
+| Real builder regression with race detection | Mixed cluster order and repeated calls select the correct UID; HTTP 403/503 errors stop both builders before Deployment creation; no races reported | [Final race-enabled test log](candidate-race.log), [command and exact source hashes](candidate-provenance.json) |
 | Candidate static checks | Full lint passes with zero issues on both changed packages; format check passes | [Lint output](candidate-lint.log), [commands and source hashes](candidate-provenance.json) |
 | Subctl dependency integration | Full executable builds with the final candidate, version/help smoke passes, and both platform exports match the expected templates | [Source/binary hashes, module graph, linked symbols, and limits](subctl-build-provenance.json) |
 

@@ -37,5 +37,12 @@
   ],
   "unit_command": "GOTMPDIR=/path/with/space GOGC=20 go test -mod=readonly -race -p 1 -v ./test/unit/framework -run '^TestNettest' --ginkgo.v --ginkgo.trace --ginkgo.junit-report /path/to/junit.xml",
   "lint_command": "golangci-lint run ./test/e2e/framework ./test/unit/framework",
-  "fmt_command": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go"
+  "fmt_command": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go",
+  "verification": {
+    "race_unit_exit_code": 0,
+    "race_log_sha256": "991f50496c29c0e1fdba8173f66fb0bb7722e8fe92389e88c24cb78ab42f3812",
+    "lint_issues": 0,
+    "format_diff_empty": true,
+    "patch_applies_to_exact_v0.23.4": true
+  }
 }

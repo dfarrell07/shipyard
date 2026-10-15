@@ -1,0 +1,14 @@
+=== RUN   TestNettestDeploymentUIDPerCluster
+--- PASS: TestNettestDeploymentUIDPerCluster (0.06s)
+=== RUN   TestNettestBuildersRejectDiscoveryFailure
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503
+--- PASS: TestNettestBuildersRejectDiscoveryFailure (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503 (0.00s)
+PASS
+ok  	github.com/submariner-io/lighthouse/test/unit/framework	1.142s

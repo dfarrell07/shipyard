@@ -1,0 +1,68 @@
+=== RUN   TestACM48176ShippedPolicies
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/default-controller/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/requester-anyuid/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/sa-anyuid/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/privileged-requester/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/privileged-sa/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/no-grants/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/v3-only/original
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/default-controller/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/requester-anyuid/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/sa-anyuid/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/privileged-requester/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/privileged-sa/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/no-grants/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/v3-only/patched
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/default-controller/original/hostUsers-false-control
+=== RUN   TestACM48176ShippedPolicies/nginx-demo/default-controller/patched/hostUsers-false-control
+=== RUN   TestACM48176ShippedPolicies/netshoot/default-controller/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/requester-anyuid/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/sa-anyuid/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/privileged-requester/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/privileged-sa/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/no-grants/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/v3-only/original
+=== RUN   TestACM48176ShippedPolicies/netshoot/default-controller/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/requester-anyuid/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/sa-anyuid/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/privileged-requester/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/privileged-sa/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/no-grants/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/v3-only/patched
+=== RUN   TestACM48176ShippedPolicies/netshoot/default-controller/original/hostUsers-false-control
+=== RUN   TestACM48176ShippedPolicies/netshoot/default-controller/patched/hostUsers-false-control
+--- PASS: TestACM48176ShippedPolicies (0.20s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/default-controller/original (0.06s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/requester-anyuid/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/sa-anyuid/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/privileged-requester/original (0.03s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/privileged-sa/original (0.01s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/no-grants/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/v3-only/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/default-controller/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/requester-anyuid/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/sa-anyuid/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/privileged-requester/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/privileged-sa/patched (0.01s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/no-grants/patched (0.01s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/v3-only/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/default-controller/original/hostUsers-false-control (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/nginx-demo/default-controller/patched/hostUsers-false-control (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/default-controller/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/requester-anyuid/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/sa-anyuid/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/privileged-requester/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/privileged-sa/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/no-grants/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/v3-only/original (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/default-controller/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/requester-anyuid/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/sa-anyuid/patched (0.01s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/privileged-requester/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/privileged-sa/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/no-grants/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/v3-only/patched (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/default-controller/original/hostUsers-false-control (0.00s)
+    --- PASS: TestACM48176ShippedPolicies/netshoot/default-controller/patched/hostUsers-false-control (0.00s)
+PASS
+ok  	github.com/openshift/apiserver-library-go/pkg/securitycontextconstraints/sccadmission	0.306s
