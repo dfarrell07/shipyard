@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Require the 14 ACM-48176 cases to pass once in each direction's JUnit.
 
-This checks case execution, not artifact identity, admission, collector coverage,
-or causality. Additional cases are counted separately and do not substitute for
+This checks required-case outcomes and supported Ginkgo suite metadata, not
+artifact identity, admission, collector coverage, causality, or per-spec retry
+attempts omitted by the pinned Ginkgo JUnit reporter. Additional cases are counted separately and do not substitute for
 the required cases. XML system-out/system-err and local directories are not emitted.
 """
 
@@ -71,7 +72,28 @@ def inspect_report(path, names):
     suites = list(root.iter("testsuite"))
     if root.tag == "testsuites":
         suites.append(root)
+    if not list(root.iter("testsuite")):
+        result["problems"].append({"kind": "missing_test_suite"})
     for suite in suites:
+        if suite.tag == "testsuite":
+            # These fields are emitted by the pinned Ginkgo v2.27.5 reporter.
+            # Dry runs mark every spec passed; testcase outcomes alone cannot
+            # establish that their bodies ran. Require one unambiguous value.
+            properties = collections.defaultdict(list)
+            for prop in suite.findall("properties/property"):
+                properties[prop.get("name")].append(prop.get("value"))
+            required = {"SuiteSucceeded": "true", "DryRun": "false",
+                        "SuiteHasProgrammaticFocus": "false", "SpecialSuiteFailureReason": ""}
+            for name, expected in required.items():
+                if properties[name] != [expected]:
+                    result["problems"].append({"kind": "invalid_suite_property", "property": name})
+            attempts = properties["FlakeAttempts"]
+            if attempts not in (["0"], ["1"]):
+                result["problems"].append({"kind": "flake_retries_enabled_or_invalid"})
+            # Not emitted by v2.27.5; reject truncation if another producer
+            # supplies this marker, without pretending it is a pinned field.
+            if "ReportWasTruncated" in properties and properties["ReportWasTruncated"] != ["false"]:
+                result["problems"].append({"kind": "report_truncated_or_invalid"})
         # Suite-level infrastructure failures may have no testcase element.
         for field in ("failures", "errors"):
             raw = suite.get(field, "0")

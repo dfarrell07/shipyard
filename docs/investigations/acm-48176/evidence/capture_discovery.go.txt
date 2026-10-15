@@ -1,0 +1,163 @@
+// Read-only local QE evidence collector. Output includes private cluster metadata.
+// Build against the inspected client-go module graph; do not run from a shell retry loop.
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
+	watchtools "k8s.io/client-go/tools/watch"
+)
+
+type metadataLog struct {
+	mu      sync.Mutex
+	encoder *json.Encoder
+}
+
+func (l *metadataLog) write(phase string, fields map[string]any) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	fields["phase"] = phase
+	fields["time"] = time.Now().UTC().Format(time.RFC3339Nano)
+	return l.encoder.Encode(fields)
+}
+
+func capture(ctx context.Context, resource dynamic.ResourceInterface, selector string, output, metadata io.Writer) error {
+	log := &metadataLog{encoder: json.NewEncoder(metadata)}
+	encoder := json.NewEncoder(output)
+	listCtx, listCancel := context.WithTimeout(ctx, 30*time.Second)
+	initial, err := resource.List(listCtx, metav1.ListOptions{LabelSelector: selector})
+	listCancel()
+	if err != nil {
+		return fmt.Errorf("initial list: %w", err)
+	}
+	rv := initial.GetResourceVersion()
+	if rv == "" || rv == "0" || initial.GetContinue() != "" {
+		return errors.New("initial list must be complete and have a nonzero resourceVersion")
+	}
+	if err = encoder.Encode(map[string]any{"phase": "initial_list", "object": initial}); err != nil {
+		return err
+	}
+	if err = log.write("list_complete", map[string]any{"resourceVersion": rv, "items": len(initial.Items), "selector": selector}); err != nil {
+		return err
+	}
+	fatal := make(chan error, 1)
+	fail := func(err error) {
+		select {
+		case fatal <- err:
+		default:
+		}
+	}
+	lw := &cache.ListWatch{WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+		options.LabelSelector = selector
+		w, watchErr := resource.Watch(ctx, options)
+		if watchErr != nil {
+			if err := log.write("watch_request_error", map[string]any{"resourceVersion": options.ResourceVersion, "error": watchErr.Error()}); err != nil {
+				fail(err)
+			}
+			if apierrors.IsResourceExpired(watchErr) || apierrors.IsGone(watchErr) {
+				// RetryWatcher does not itself terminate initial HTTP 410 errors.
+				status := apierrors.NewResourceExpired("resourceVersion expired; capture coverage is incomplete").ErrStatus
+				ch := make(chan watch.Event, 1)
+				ch <- watch.Event{Type: watch.Error, Object: &status}
+				close(ch)
+				return watch.NewProxyWatcher(ch), nil
+			}
+			return w, watchErr
+		}
+		if w == nil {
+			fail(errors.New("accepted watch returned nil watcher"))
+			return nil, errors.New("nil watcher")
+		}
+		if err := log.write("watch_established", map[string]any{"resourceVersion": options.ResourceVersion, "selector": selector}); err != nil {
+			w.Stop()
+			fail(err)
+			return nil, err
+		}
+		return w, nil
+	}}
+	rw, err := watchtools.NewRetryWatcherWithContext(ctx, rv, lw)
+	if err != nil {
+		return err
+	}
+	defer func() { rw.Stop(); <-rw.Done() }()
+	for {
+		select {
+		case err := <-fatal:
+			return err
+		case event, ok := <-rw.ResultChan():
+			if !ok {
+				if ctx.Err() != nil {
+					return log.write("operator_stop", map[string]any{})
+				}
+				return errors.New("watch ended before operator stop")
+			}
+			if err := encoder.Encode(map[string]any{"phase": "watch_event", "type": event.Type, "object": event.Object}); err != nil {
+				return err
+			}
+			if event.Type == watch.Error {
+				return fmt.Errorf("terminal watch error; capture incomplete: %v", apierrors.FromObject(event.Object))
+			}
+		case <-ctx.Done():
+			return log.write("operator_stop", map[string]any{})
+		}
+	}
+}
+
+func run() error {
+	contextName := flag.String("context", "", "required kubeconfig context")
+	kubeconfig := flag.String("kubeconfig", "", "optional kubeconfig path; otherwise normal client loading")
+	resourceName := flag.String("resource", "", "namespaces, deployments.apps, replicasets.apps, pods, or events")
+	flag.Parse()
+	if *contextName == "" {
+		return errors.New("--context is required")
+	}
+	resources := map[string]schema.GroupVersionResource{
+		"namespaces": {Version: "v1", Resource: "namespaces"}, "pods": {Version: "v1", Resource: "pods"}, "events": {Version: "v1", Resource: "events"},
+		"deployments.apps": {Group: "apps", Version: "v1", Resource: "deployments"}, "replicasets.apps": {Group: "apps", Version: "v1", Resource: "replicasets"},
+	}
+	gvr, ok := resources[*resourceName]
+	if !ok {
+		return errors.New("unsupported or missing --resource")
+	}
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	rules.ExplicitPath = *kubeconfig
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{CurrentContext: *contextName}).ClientConfig()
+	if err != nil {
+		return err
+	}
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	selector := ""
+	if *resourceName == "namespaces" {
+		selector = "e2e-framework=discovery"
+	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	return capture(ctx, client.Resource(gvr), selector, os.Stdout, os.Stderr)
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, "capture failed:", err)
+		os.Exit(1)
+	}
+}

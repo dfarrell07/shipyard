@@ -4,6 +4,10 @@ Use this after the corrected Lighthouse dependency is in the delivered Subctl ar
 with fresh output directories, unchanged cluster configuration/service-account grants, and the same actual QE nettest digest.
 The digest used in the earlier local container experiments is not established as the failing QE image.
 
+The **original baseline** is an expected negative control: retain its nonzero exit statuses, original case failures, and
+controller events. The checker should reject those reports. The zero-exit, all-cases-passed requirements below apply to the
+**corrected delivered artifact**. Keep their output directories and artifact identities separate.
+
 ## Capture before starting tests
 
 On **each** context, require successful initial LISTs and established WATCHes for these resources:
@@ -13,25 +17,48 @@ On **each** context, require successful initial LISTs and established WATCHes fo
 | `namespaces` | Label selector `e2e-framework=discovery` |
 | `deployments.apps`, `replicasets.apps`, `pods`, `events` | Each resource separately, across namespaces |
 
-Confirm access by actually listing and opening the watches. An authorization precheck alone is insufficient.
-For example, start the Pod collector as a background process and preserve its PID:
+Use the read-only [collector](evidence/capture_discovery.go.txt), built against the inspected client-go v0.35.8 graph.
+It takes an initial complete LIST, then resumes watch connections from their last resourceVersion. A normal EOF reconnects;
+HTTP or streamed 410 terminates without relisting, because relisting could hide missed events.
+The [collector checks](evidence/capture-discovery-provenance.json) exercise replay after EOF and terminal/error controls.
+
+Set `LOCAL_CAPTURE` to a fresh absolute directory outside the notes checkout. From the investigation directory, copy the
+collector and its tests into a temporary source directory. Then build/test from the inspected Lighthouse or Subctl checkout
+whose Go module selects the recorded client-go version:
 
 ```bash
-kubectl --context "$CTX_A" -v=6 get pods -A --watch --output-watch-events -o json \
+capture_src=$(mktemp -d)
+cp evidence/capture_discovery.go.txt "$capture_src/capture_discovery.go"
+cp evidence/capture_discovery_test.go.txt "$capture_src/capture_discovery_test.go"
+cd "$INSPECTED_MODULE_CHECKOUT"
+GOWORK=off go test -mod=readonly -race "$capture_src/capture_discovery.go" "$capture_src/capture_discovery_test.go"
+GOWORK=off go build -mod=readonly -o "$LOCAL_CAPTURE/capture-discovery" "$capture_src/capture_discovery.go"
+```
+
+Record that collector binary's checksum and module metadata. Start one process per resource/context, preserving each PID:
+
+```bash
+"$LOCAL_CAPTURE/capture-discovery" --context "$CTX_A" --resource pods \
   > "$LOCAL_CAPTURE/a-pods.jsonstream" 2> "$LOCAL_CAPTURE/a-pods.stderr" &
 a_pods_pid=$!
 ```
 
-Repeat for each resource and context. The namespace command uses
-`get namespaces -l e2e-framework=discovery --watch --output-watch-events -o json` without `-A`.
-Keep output and stderr in a local directory outside the notes checkout; API URLs and workload metadata can be private.
-The JSON output is a stream, not necessarily one standalone JSON document.
+Repeat for all five resources and both contexts. The namespace collector automatically applies `e2e-framework=discovery`;
+the other four resources use all namespaces. `--kubeconfig` is optional; otherwise normal kubeconfig loading applies.
+Keep stdout and stderr local: objects, API errors, and client diagnostics can contain private metadata.
+The JSON output is a stream containing the initial LIST and subsequent object-change events, not one standalone document.
 
-Before proceeding, verify the initial LIST succeeded and stderr shows HTTP 200 for the **actual `watch=true` request** for
-each resource/context. A discovery request's 200 response, an initial LIST's 200 response, or a live PID is not watch readiness.
-Use a finite startup deadline and stop if any collector has not established its watch. The LIST resource version followed by
-the WATCH preserves events occurring between the two requests. Keep collectors running until both directional runs finish;
-record exits/errors and investigate unexplained gaps or loss of resource-version continuity before accepting capture coverage.
+Before testing, require `list_complete` and `watch_established` records for all ten processes, with a finite startup deadline.
+The latter is logged only after the actual watch request is accepted. Preserve readiness records and reconnect resource versions.
+Resource versions are opaque tokens; do not require consecutive numeric values.
+Every collector must remain alive through the runs. Only after tests and final evidence collection finish, send SIGTERM and
+record each process's exit status and `operator_stop` record. A premature exit is invalid even when its status is zero.
+Investigate every request/output error; an unexplained gap or terminal 410 invalidates capture. Do not restart the whole
+collector in a shell loop, because its fresh LIST would hide a gap. Reproduce with fresh capture if continuity was lost.
+
+A single `kubectl get --watch` connection is insufficient for the original baseline, which lasts about 58 minutes.
+A [local reproduction](evidence/kubectl-watch-close-results.json) shows kubectl exiting zero on normal watch closure without
+reconnecting. A live PID or successful initial HTTP response therefore does not establish coverage of the full run.
 
 Preserve namespace UID/MCS allocations and the Deployment → ReplicaSet → Pod owner UID chain, service-account identity,
 `openshift.io/scc`, pod/container security contexts, configured image, and imageID. Confirm corrected controller-created pods
@@ -92,6 +119,10 @@ exactly once with status `passed`, without failure/error/skip children, in each 
 suite infrastructure errors, and reported retries/flakes; unrelated original skips are counted separately.
 This prevents a green total from hiding skipped/replaced cases, including ordinary discovery skipped under a changed clusterset-IP
 configuration. Do not enable wrapper retries or accept a flaky rerun as a new pass.
+
+Require genuine execution metadata: the pinned producer must report `DryRun=false`, `SuiteSucceeded=true`, and no programmatic
+focus or declared suite retries. Its JUnit does not contain per-case attempt counts, so audit the exact landed discovery code
+and wrappers for per-spec retry decorators, or retain separate attempt-count evidence. A final passed status cannot prove this.
 
 The checker cannot establish opposite context order, executable identity, collector coverage, causality, or retries hidden outside
 JUnit. Preserve those records separately. Its self-checks reject the actual attached failing report and adversarial missing,

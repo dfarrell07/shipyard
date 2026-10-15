@@ -4,7 +4,8 @@ The first three independent reviewers examined admission, container runtime beha
 The audit changed the proposal: remove the fixed UID only on OpenShift, retaining UID 10000 on plain Kubernetes.
 The earlier unconditional two-line deletion is insufficient for a compatible general release.
 A [second adversarial review](PLAN-AUDIT.md) corrected an unbounded discovery request and strengthened delivery/QE acceptance.
-The candidate and verification rows below now refer to that bounded implementation.
+The [latest review](RELEVANT-CASES-AUDIT.md) adds strict response decoding, complete test isolation, and stronger acceptance tooling.
+The candidate and verification rows below refer to the current implementation; the earlier admission/runtime checks remain valid.
 
 ## Concrete compatibility defect found
 
@@ -36,9 +37,9 @@ Sources: [Subctl version check](https://github.com/submariner-io/subctl/blob/4b4
 | Legacy 0.23.2 runtime | Four cases passed: both helper commands at UID 10000 and UID 1001530000 | [Results](legacy-runtime-results.json), [output](legacy-runtime.log), [reproducer](legacy_runtime_audit.py) |
 | Final candidate's emitted templates | OpenShift outputs exactly match validated no-UID templates; Kubernetes outputs exactly match original explicit-UID templates | [Byte comparisons and hashes](candidate-template-comparison.json) |
 | Default unit-runner test discovery | Actual shared runner selects `test/unit/framework`; it prunes `test/e2e` | [Enumeration log](unit-discovery.log), [recorded Go arguments](unit-discovery-invocations.jsonl) |
-| Real builder regression with race detection | Mixed/repeated cluster calls select the correct UID; HTTP errors, stalled requests, and zero budget stop both builders; no races reported | [Final race-enabled test log](candidate-race.log), [command and exact source hashes](candidate-provenance.json) |
+| Real builder regression with race detection | Three-client discovery routing, invalid replies, HTTP errors, deadlines, and isolation pass shuffled three-repeat race tests | [Final race-enabled test log](candidate-race.log), [command and exact source hashes](candidate-provenance.json) |
 | Candidate static checks | Full lint passes with zero issues on both changed packages; format check passes | [Lint output](candidate-lint.log), [commands and source hashes](candidate-provenance.json) |
-| Subctl dependency integration | Fresh executable builds with the bounded candidate; version/help and both-platform exports pass | [Current source/binary hashes and limits](subctl-bounded-build-provenance.json), [selected graph](subctl-bounded-selected-modules.txt) |
+| Subctl dependency integration | Fresh executable builds with the current validated candidate; version/help and both-platform exports pass | [Current source/binary hashes and limits](subctl-validated-build-provenance.json), [selected graph](subctl-validated-selected-modules.txt) |
 
 The runtime checks verify zero effective capabilities, no-new-privileges, an active seccomp filter, read-only `/tmp` and `/app`,
 UDP/TCP DNS answers, and 64 successful HTTP responses across the eight server cases. CPU/memory flags were configured;
@@ -47,7 +48,7 @@ These are rootless Podman/crun checks; their UID mappings do not qualify Kuberne
 The current-image results record an irrelevant external DNS timeout in the initial runner and the final case's successful cleaned rerun.
 The unit-discovery check uses a recording Go shim to verify package enumeration only; it does not execute the tests.
 The current Subctl build uses a local module replacement, not a published dependency update.
-The [older Subctl build record](subctl-build-provenance.json) describes the superseded, unbounded candidate only.
+The [original build record](subctl-build-provenance.json) and [second build](subctl-bounded-build-provenance.json) are historical.
 Its VCS stamp is disabled because the installed
 Go toolchain skipped the worktree's `.git` file and selected the enclosing repository. The provenance records the independently
 checked source revision and candidate hash instead of attributing that misleading stamp to Subctl. The binary is retained locally.

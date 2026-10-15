@@ -1,0 +1,50 @@
+{
+  "scope": "Local read-only collector implementation/fixture proof; not live QE or complete controller qualification",
+  "source_sha256": {
+    "capture_discovery.go": "bc0374ea8004a54a0670bb8801d874c38d4f8dadca24fa750fea547add1e40eb",
+    "capture_discovery_test.go": "2c11943defc14e9fb5042db5f99b194ddeb039502fe68c5cc378b9568744ab01",
+    "capture_discovery_cli_audit.py": "d7f9c1bd984fe0e59fbe16aed70d5f71a5adc62a4f04beeac5911be85d7bdb91",
+    "retry_watcher_continuity_audit.go": "7bed62024439a13c03449336403b58811dc4ad4e2efd3567f6d4fa9822d86150",
+    "kubectl_watch_close_audit.py": "e88cf96b71c6ac99c49ea01ffa73d5d21cf05b9dc3ab771f9ca09ce5c9593581",
+    "legacy_no_root_group_audit.py": "4ed9d5394c2e24d50a76e7d272e8991159e63c6aadd0c3ac8a2d021a9ac79214"
+  },
+  "binary_sha256": "4662a59f86099606e39e41fb0b4910cd5f9b7d09959810604501e803802288b6",
+  "go_version": "go version go1.26.8-X:nodwarf5 linux/amd64",
+  "go_environment": {
+    "GOFLAGS": "",
+    "GOWORK": ""
+  },
+  "client_go": "v0.35.8",
+  "test_command": "go test -race -count=1 -v <scratch>/capture_discovery.go <scratch>/capture_discovery_test.go",
+  "build_command": "go build -o <scratch>/capture-discovery <scratch>/evidence/capture_discovery.go",
+  "module_context": "Inspected Lighthouse v0.23.4 candidate checkout; no changes to its module graph",
+  "commands_note": "Absolute scratch paths elided; outputs retained beside source.",
+  "verification_artifact_sha256": {
+    "capture-discovery-test.log": "895eb26e4962208466abdede6d2689b9d50493dff5a58e70f3250b1a48b86c62",
+    "capture-discovery-cli-results.json": "87a2911588f55339439620f0df98956095adc79b16705ad98346dbedc9e61fb3",
+    "retry-watcher-continuity-results.json": "0244227d53ea9e1183f6020aafcbc2620c0250b8040e4af84286405cf8a69148",
+    "kubectl-watch-close-results.json": "cb3b69959d4ca06db2ca85b4e5d26387a131bb69718c84581ff74f5a4f9a831f",
+    "legacy-no-root-group-results.json": "f6f332a9270ee3ccae03aba7605c605b3259d14f31f1a21a47bf3bbc465d5202"
+  },
+  "tested_cases": {
+    "race_enabled_function_tests": [
+      "EOF resumes from last RV without relisting and captures intervening event",
+      "stream 410 terminates",
+      "initial HTTP 410 terminates via conversion guard",
+      "initial missing RV fails",
+      "initial zero RV fails",
+      "partial initial LIST fails",
+      "initial output failure fails"
+    ],
+    "standalone_cli_tests": [
+      "all five resource paths",
+      "explicit context overrides deliberately wrong default context",
+      "namespace selector preserved",
+      "successful initial LIST and watch_established",
+      "alive until operator SIGTERM",
+      "operator_stop metadata and exit zero"
+    ]
+  },
+  "standalone_cli_command": "python3 <scratch>/evidence/capture_discovery_cli_audit.py",
+  "rv_note": "Resource versions are opaque strings. Continuity means resuming from the last accepted version, not requiring consecutive integers. Numeric strings occur only in the local fixture."
+}

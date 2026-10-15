@@ -1,5 +1,8 @@
 # Second adversarial review of the implementation plan
 
+This records the second review at commit `ae55fe15`; the [latest review](RELEVANT-CASES-AUDIT.md) supersedes its candidate.
+Current patch, regression, and checker links now include the subsequent corrections.
+
 Three independent reviewers challenged the implementation, release delivery, and QE acceptance procedure.
 They found a real timeout defect in the previous candidate and several ways a misleading build or green test result could
 leave this issue unresolved. The UID policy remains unchanged: SCC defaulting on OpenShift, UID 10000 on plain Kubernetes.
@@ -63,7 +66,7 @@ Use two commands with reversed contexts, distinct reports, the same pinned image
 environment variable explicitly removed after recording it. Require both command exit codes to be zero.
 The [case checker](check_discovery_junit.py) requires all 14 original names exactly once and passed in each report; it rejects
 skips of those cases, substitutions, duplicates, reported retries, and additional reported failures/infrastructure errors.
-Its [21 adversarial self-checks](junit-checker-selftest-results.json) pass, including rejection of the actual failing attachment.
+Its 21 adversarial self-checks passed at this review; [current expanded results](junit-checker-selftest-results.json) add later cases.
 The [self-check source](check_discovery_junit_selftest.py) constructs synthetic passing/mutated reports only as test inputs.
 JUnit cannot independently prove context order, artifact identity, collector coverage, causality, or retries hidden outside it.
 
@@ -78,8 +81,8 @@ JUnit cannot independently prove context order, artifact identity, collector cov
 | Fresh Subctl integration | Build, module metadata, version/help smoke, and both-platform exports pass: [provenance](subctl-bounded-build-provenance.json) |
 
 The unchanged template bytes retain the earlier 66 admission outcomes and 16 local runtime cases as relevant evidence.
-The new production source hash is `e2e83bccd75aa722da7814248c5451d44be5aed6cfdce736c591b242fbb1e7aa`.
-The new local Subctl binary hash is `433d9872da3cf47c4f25eb0b057b2a70bf6561150b2be3113df78a216db85386`.
+The second-review production source hash was `e2e83bccd75aa722da7814248c5451d44be5aed6cfdce736c591b242fbb1e7aa`.
+The second-review local Subctl binary hash was `433d9872da3cf47c4f25eb0b057b2a70bf6561150b2be3113df78a216db85386`.
 That build captured an earlier test-only revision; the provenance distinguishes it from the final race/lint-tested test source.
 Tests are not linked into the delivered executable, and the production source did not change between these checks.
 

@@ -114,6 +114,132 @@
     },
     {
       "accepted": false,
+      "case": "missing_property_SuiteSucceeded",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_property_SuiteSucceeded",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_property_DryRun",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_property_DryRun",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_property_SuiteHasProgrammaticFocus",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_property_SuiteHasProgrammaticFocus",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_property_SpecialSuiteFailureReason",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_property_SpecialSuiteFailureReason",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_property_FlakeAttempts",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_property_FlakeAttempts",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_SuiteSucceeded_false",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_DryRun_true",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_DryRun_garbage",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_SuiteHasProgrammaticFocus_true",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_SpecialSuiteFailureReason_infrastructure_failure",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_FlakeAttempts_2",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_FlakeAttempts_garbage",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "bad_property_ReportWasTruncated_true",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
       "case": "second_direction_still_fails",
       "exit_code": 1,
       "expected_accept": false,

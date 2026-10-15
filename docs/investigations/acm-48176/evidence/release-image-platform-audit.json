@@ -1,0 +1,181 @@
+{
+  "checked_at_utc": "2026-10-15T16:43:10.922526+00:00",
+  "images": [
+    {
+      "reference": "quay.io/submariner/nettest:0.23.2",
+      "index_or_manifest_digest": "sha256:151e4b053fee45626936ccbbdf1a11633d336eb9bc432f8996dd1d45385400ef",
+      "platforms": [
+        {
+          "digest": "sha256:5c62edd8dd8b6c0b7f42b475a4f91141ddf88ab519419a1bb0485c6033f80689",
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "config_architecture": "amd64",
+          "config_os": "linux",
+          "user": "",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:a215f2b8748808ee84740e380e2fa3e59c64145f12c9c30a1ce83bf87674d5fd",
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          "config_architecture": "arm64",
+          "config_os": "linux",
+          "user": "",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        }
+      ]
+    },
+    {
+      "reference": "quay.io/submariner/nettest:0.23.3",
+      "index_or_manifest_digest": "sha256:666c8ac7fd19be8bfd865d6ff4dc9c9c3a4020142e04e3cff5292a0a7c05f5ef",
+      "platforms": [
+        {
+          "digest": "sha256:35239500dd9e5d6d3dbadc7f015b1fa236b1c63907a271f3081e2a208e402700",
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "config_architecture": "amd64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:a7f548c4acb1960eecd71c9c5dd0144f26894583890bc84a87e36f7db5ab0125",
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          "config_architecture": "arm64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        }
+      ]
+    },
+    {
+      "reference": "quay.io/submariner/nettest:0.23.4",
+      "index_or_manifest_digest": "sha256:666c8ac7fd19be8bfd865d6ff4dc9c9c3a4020142e04e3cff5292a0a7c05f5ef",
+      "platforms": [
+        {
+          "digest": "sha256:35239500dd9e5d6d3dbadc7f015b1fa236b1c63907a271f3081e2a208e402700",
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "config_architecture": "amd64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:a7f548c4acb1960eecd71c9c5dd0144f26894583890bc84a87e36f7db5ab0125",
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          "config_architecture": "arm64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        }
+      ]
+    },
+    {
+      "reference": "quay.io/redhat-user-workloads/submariner-tenant/nettest-0-23@sha256:a4ca9da9d5e1193a89956f5d5e6db7c1e02297ccb450a6a72a9b228f5ab06ae1",
+      "index_or_manifest_digest": "sha256:a4ca9da9d5e1193a89956f5d5e6db7c1e02297ccb450a6a72a9b228f5ab06ae1",
+      "platforms": [
+        {
+          "digest": "sha256:e365f4b8fbc489b30fb74d3900f01b900a616aebb9380fd4858670120da782d8",
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "config_architecture": "amd64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:535aa289c634e3072b7ff6d2194d7302ce2086efdd9e848aea9c2a62d2a290c2",
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "config_architecture": "arm64",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:d0b6d1f897a98454a20e728267cb4cda008bb1aa140d2d7266d026428989ac2c",
+          "platform": {
+            "architecture": "ppc64le",
+            "os": "linux"
+          },
+          "config_architecture": "ppc64le",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        },
+        {
+          "digest": "sha256:a12df066c2034ba58f541b05c8159123726a92075da1c932501d600d19fed97a",
+          "platform": {
+            "architecture": "s390x",
+            "os": "linux"
+          },
+          "config_architecture": "s390x",
+          "config_os": "linux",
+          "user": "10000",
+          "entrypoint": null,
+          "cmd": [
+            "/bin/bash",
+            "-l"
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": "Registry config inspection only; no foreign-architecture runtime qualification. Public tags were resolved at audit time; pinned digests identify inspected bytes."
+}

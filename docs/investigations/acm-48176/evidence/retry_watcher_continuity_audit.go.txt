@@ -1,0 +1,165 @@
+// Local fixture proof only; not a deployed QE collector.
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"sync"
+	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
+)
+
+type result struct {
+	Mode                   string   `json:"mode"`
+	InitialListRV          string   `json:"initial_list_rv"`
+	WatchRVs               []string `json:"watch_request_rvs"`
+	ReceivedRVs            []string `json:"received_event_rvs"`
+	TerminalCode           int32    `json:"terminal_error_code"`
+	AcceptedWatchResponses int      `json:"accepted_watch_responses"`
+	ListRequests           int      `json:"list_requests"`
+	Passed                 bool     `json:"passed"`
+}
+
+func check(mode string) result {
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	var mu sync.Mutex
+	out := result{Mode: mode}
+	status := &metav1.Status{TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"}, Status: "Failure", Reason: metav1.StatusReasonExpired, Code: 410, Message: "fixture resource version expired"}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path != "/api/v1/pods" {
+			panic(r.URL.Path)
+		}
+		if r.URL.Query().Get("watch") != "true" {
+			mu.Lock()
+			out.ListRequests++
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(&corev1.PodList{TypeMeta: metav1.TypeMeta{Kind: "PodList", APIVersion: "v1"}, ListMeta: metav1.ListMeta{ResourceVersion: "10"}})
+			return
+		}
+		mu.Lock()
+		out.WatchRVs = append(out.WatchRVs, r.URL.Query().Get("resourceVersion"))
+		count := len(out.WatchRVs)
+		mu.Unlock()
+		if count == 2 && mode == "http-410" {
+			w.WriteHeader(410)
+			_ = json.NewEncoder(w).Encode(status)
+			return
+		}
+		w.WriteHeader(200)
+		w.(http.Flusher).Flush()
+		mu.Lock()
+		out.AcceptedWatchResponses++
+		mu.Unlock()
+		if count == 2 && mode == "stream-410" {
+			_ = json.NewEncoder(w).Encode(map[string]any{"type": "ERROR", "object": status})
+			w.(http.Flusher).Flush()
+			return
+		}
+		rv := "11"
+		if count == 2 {
+			rv = "12"
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"type": "ADDED", "object": &corev1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"}, ObjectMeta: metav1.ObjectMeta{Name: "fixture-pod-" + rv, ResourceVersion: rv}}})
+		w.(http.Flusher).Flush()
+		if count == 1 {
+			return
+		} // Clean EOF; event 12 is retained for the resumed request.
+		<-r.Context().Done()
+	}))
+	defer server.Close()
+	client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL, ContentConfig: rest.ContentConfig{ContentType: "application/json", AcceptContentTypes: "application/json"}})
+	if err != nil {
+		panic(err)
+	}
+	pods := client.CoreV1().Pods("")
+	list, err := pods.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	out.InitialListRV = list.ResourceVersion
+	lw := &cache.ListWatch{WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+		// A real collector must preserve its original selectors in every retry here.
+		options.LabelSelector = "app=fixture"
+		w, err := pods.Watch(ctx, options)
+		// RetryWatcher v0.35.8 treats stream 410 as terminal but otherwise retries
+		// initial HTTP 410. Convert that status into the same terminal event form.
+		if apierrors.IsResourceExpired(err) || apierrors.IsGone(err) {
+			ch := make(chan watch.Event, 1)
+			ch <- watch.Event{Type: watch.Error, Object: status}
+			close(ch)
+			return watch.NewProxyWatcher(ch), nil
+		}
+		return w, err
+	}}
+	rw, err := watchtools.NewRetryWatcherWithContext(ctx, list.ResourceVersion, lw)
+	if err != nil {
+		panic(err)
+	}
+	defer rw.Stop()
+	events := 0
+	for events < 2 {
+		select {
+		case e, ok := <-rw.ResultChan():
+			if !ok {
+				panic("watch closed before required event")
+			}
+			if e.Type == watch.Error {
+				out.TerminalCode = e.Object.(*metav1.Status).Code
+				events = 2
+				continue
+			}
+			out.ReceivedRVs = append(out.ReceivedRVs, e.Object.(*corev1.Pod).ResourceVersion)
+			events++
+		case <-ctx.Done():
+			panic("continuity fixture deadline")
+		}
+	}
+	if mode != "resume" {
+		select {
+		case <-rw.Done():
+		case <-ctx.Done():
+			panic("410 watcher failed to stop")
+		}
+	}
+	cancel()
+	rw.Stop()
+	<-rw.Done()
+	mu.Lock()
+	defer mu.Unlock()
+	out.Passed = out.ListRequests == 1 && len(out.WatchRVs) == 2 && out.WatchRVs[0] == "10" && out.WatchRVs[1] == "11"
+	if mode == "resume" {
+		out.Passed = out.Passed && len(out.ReceivedRVs) == 2 && out.ReceivedRVs[1] == "12" && out.TerminalCode == 0
+	}
+	if mode != "resume" {
+		out.Passed = out.Passed && len(out.ReceivedRVs) == 1 && out.TerminalCode == 410
+	}
+	return out
+}
+
+func main() {
+	results := []result{check("resume"), check("stream-410"), check("http-410")}
+	encoded, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(encoded))
+	for _, result := range results {
+		if !result.Passed {
+			os.Exit(1)
+		}
+	}
+}

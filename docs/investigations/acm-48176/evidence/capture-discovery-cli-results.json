@@ -1,0 +1,51 @@
+{
+  "fixture": "localhost HTTP; no credentials/live cluster; actual CLI binary",
+  "cases": [
+    {
+      "resource": "namespaces",
+      "path": "/api/v1/namespaces",
+      "selector": "e2e-framework=discovery",
+      "explicit_context_overrode_wrong_default": true,
+      "alive_before_operator_stop": true,
+      "operator_stop_exit": 0,
+      "passed": true
+    },
+    {
+      "resource": "pods",
+      "path": "/api/v1/pods",
+      "selector": "",
+      "explicit_context_overrode_wrong_default": true,
+      "alive_before_operator_stop": true,
+      "operator_stop_exit": 0,
+      "passed": true
+    },
+    {
+      "resource": "events",
+      "path": "/api/v1/events",
+      "selector": "",
+      "explicit_context_overrode_wrong_default": true,
+      "alive_before_operator_stop": true,
+      "operator_stop_exit": 0,
+      "passed": true
+    },
+    {
+      "resource": "deployments.apps",
+      "path": "/apis/apps/v1/deployments",
+      "selector": "",
+      "explicit_context_overrode_wrong_default": true,
+      "alive_before_operator_stop": true,
+      "operator_stop_exit": 0,
+      "passed": true
+    },
+    {
+      "resource": "replicasets.apps",
+      "path": "/apis/apps/v1/replicasets",
+      "selector": "",
+      "explicit_context_overrode_wrong_default": true,
+      "alive_before_operator_stop": true,
+      "operator_stop_exit": 0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

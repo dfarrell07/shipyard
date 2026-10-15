@@ -1,0 +1,20 @@
+=== RUN   TestCaptureContinuity
+=== RUN   TestCaptureContinuity/resume
+=== RUN   TestCaptureContinuity/stream-410
+=== RUN   TestCaptureContinuity/http-410
+--- PASS: TestCaptureContinuity (3.11s)
+    --- PASS: TestCaptureContinuity/resume (1.02s)
+    --- PASS: TestCaptureContinuity/stream-410 (1.07s)
+    --- PASS: TestCaptureContinuity/http-410 (1.02s)
+=== RUN   TestCaptureRejectsIncompleteInitialListAndOutputFailure
+=== RUN   TestCaptureRejectsIncompleteInitialListAndOutputFailure/missing-rv
+=== RUN   TestCaptureRejectsIncompleteInitialListAndOutputFailure/zero-rv
+=== RUN   TestCaptureRejectsIncompleteInitialListAndOutputFailure/partial-list
+=== RUN   TestCaptureRejectsIncompleteInitialListAndOutputFailure/failed-output
+--- PASS: TestCaptureRejectsIncompleteInitialListAndOutputFailure (0.04s)
+    --- PASS: TestCaptureRejectsIncompleteInitialListAndOutputFailure/missing-rv (0.01s)
+    --- PASS: TestCaptureRejectsIncompleteInitialListAndOutputFailure/zero-rv (0.01s)
+    --- PASS: TestCaptureRejectsIncompleteInitialListAndOutputFailure/partial-list (0.00s)
+    --- PASS: TestCaptureRejectsIncompleteInitialListAndOutputFailure/failed-output (0.00s)
+PASS
+ok  	command-line-arguments	4.245s

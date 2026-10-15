@@ -45,7 +45,7 @@ diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.
  						SeccompProfile: &corev1.SeccompProfile{
  							Type: corev1.SeccompProfileTypeRuntimeDefault,
  						},
-@@ -170,3 +175,24 @@
+@@ -170,3 +175,26 @@
  
  	return f.AwaitPodsByAppLabel(cluster, appName, deployment.Namespace, 1)
  }
@@ -57,10 +57,12 @@ diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.
 +	ctx, cancel := context.WithTimeout(context.Background(), framework.TestContext.OperationTimeoutToDuration())
 +	defer cancel()
 +
-+	groups := &metav1.APIGroupList{}
-+	err := framework.KubeClients[cluster].Discovery().RESTClient().Get().AbsPath("/apis").
-+		SetHeader("Accept", "application/json").Do(ctx).Into(groups)
++	response, err := framework.KubeClients[cluster].Discovery().RESTClient().Get().AbsPath("/apis").
++		SetHeader("Accept", "application/json").Do(ctx).Get()
 +	Expect(err).NotTo(HaveOccurred(), "discover API groups for nettest UID selection")
++
++	groups, ok := response.(*metav1.APIGroupList)
++	Expect(ok).To(BeTrue(), "discover API groups for nettest UID selection: expected APIGroupList, received %T", response)
 +
 +	for i := range groups.Groups {
 +		if groups.Groups[i].Name == "security.openshift.io" {
@@ -74,7 +76,7 @@ diff --git a/test/unit/framework/deployments_uid_test.go b/test/unit/framework/d
 new file mode 100644
 --- /dev/null
 +++ b/test/unit/framework/deployments_uid_test.go
-@@ -0,0 +1,332 @@
+@@ -0,0 +1,436 @@
 +/*
 +SPDX-License-Identifier: Apache-2.0
 +
@@ -115,9 +117,12 @@ new file mode 100644
 +	"k8s.io/client-go/rest"
 +)
 +
++const nginxBuilder = "nginx"
++
 +type uidPodCapture struct {
-+	mu   sync.Mutex
-+	pods []*corev1.PodSpec
++	mu          sync.Mutex
++	pods        []*corev1.PodSpec
++	discoveries int
 +}
 +
 +func (c *uidPodCapture) add(spec *corev1.PodSpec) {
@@ -125,6 +130,20 @@ new file mode 100644
 +	defer c.mu.Unlock()
 +
 +	c.pods = append(c.pods, spec)
++}
++
++func (c *uidPodCapture) noteDiscovery() {
++	c.mu.Lock()
++	defer c.mu.Unlock()
++
++	c.discoveries++
++}
++
++func (c *uidPodCapture) discoveryCount() int {
++	c.mu.Lock()
++	defer c.mu.Unlock()
++
++	return c.discoveries
 +}
 +
 +func (c *uidPodCapture) snapshot() []*corev1.PodSpec {
@@ -136,7 +155,9 @@ new file mode 100644
 +
 +// The HTTP fixture supplies discovery and captures real Deployment builder output.
 +// Its Running pod response bypasses controller execution, not API discovery.
-+func uidTestClient(t *testing.T, openshift bool, discoveryStatus int32, captured *uidPodCapture) *kubernetes.Clientset {
++func uidTestClient(t *testing.T, openshift bool, discoveryStatus int32, captured *uidPodCapture,
++	responseBody ...string,
++) *kubernetes.Clientset {
 +	t.Helper()
 +
 +	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -144,8 +165,16 @@ new file mode 100644
 +
 +		switch {
 +		case r.URL.Path == "/apis":
++			captured.noteDiscovery()
++
 +			if r.Header.Get("Accept") != "application/json" {
 +				t.Errorf("discovery Accept header: %q", r.Header.Get("Accept"))
++			}
++
++			if len(responseBody) > 0 {
++				_, _ = fmt.Fprint(w, responseBody[0])
++
++				return
 +			}
 +
 +			if discoveryStatus != http.StatusOK {
@@ -204,37 +233,63 @@ new file mode 100644
 +
 +func TestNettestDeploymentUIDPerCluster(t *testing.T) {
 +	preserveUIDTestGlobals(t)
-+	var kubernetesCapture, openshiftCapture uidPodCapture
++	var kubernetesCapture, openshiftCapture, thirdCapture uidPodCapture
 +	sy.KubeClients = []*kubernetes.Clientset{
 +		uidTestClient(t, false, http.StatusOK, &kubernetesCapture),
 +		uidTestClient(t, true, http.StatusOK, &openshiftCapture),
++		uidTestClient(t, true, http.StatusOK, &thirdCapture),
 +	}
 +	sy.TestContext.OperationTimeout = 2
 +	sy.TestContext.NettestImageURL = "example.test/nettest:root-default-compatible"
 +	f := &lh.Framework{Framework: sy.NewBareFramework("uid-proof")}
 +	f.Namespace = "uid-proof"
-+	// Reverse order and repeat the first cluster to detect accidental global caching.
-+	for _, cluster := range []sy.ClusterIndex{sy.ClusterB, sy.ClusterA, sy.ClusterB} {
-+		f.NewNginxDeployment(cluster)
-+		f.NewNetShootDeploymentInNS(cluster, f.Namespace)
++	// Alternate all three target clusters and repeat indices to detect accidental caching or cluster-A reuse.
++	captures := []*uidPodCapture{&kubernetesCapture, &openshiftCapture, &thirdCapture}
++	for _, cluster := range []sy.ClusterIndex{sy.ClusterB, sy.ClusterC, sy.ClusterA, sy.ClusterC, sy.ClusterB} {
++		assertUIDDiscoveryTarget(t, captures, cluster, func() { f.NewNginxDeployment(cluster) })
++		assertUIDDiscoveryTarget(t, captures, cluster, func() { f.NewNetShootDeploymentInNS(cluster, f.Namespace) })
 +	}
 +
-+	kubernetesPods, openshiftPods := kubernetesCapture.snapshot(), openshiftCapture.snapshot()
-+	if len(kubernetesPods) != 2 || len(openshiftPods) != 4 {
-+		t.Fatalf("captured %d Kubernetes and %d OpenShift pods", len(kubernetesPods), len(openshiftPods))
++	kubernetesPods, openshiftPods, thirdPods := kubernetesCapture.snapshot(), openshiftCapture.snapshot(), thirdCapture.snapshot()
++	if len(kubernetesPods) != 2 || len(openshiftPods) != 4 || len(thirdPods) != 4 {
++		t.Fatalf("captured %d cluster-A, %d cluster-B, and %d cluster-C pods", len(kubernetesPods), len(openshiftPods), len(thirdPods))
 +	}
 +
-+	for name, specs := range map[string][]*corev1.PodSpec{"Kubernetes": kubernetesPods, "OpenShift": openshiftPods} {
++	for name, specs := range map[string][]*corev1.PodSpec{
++		"Kubernetes": kubernetesPods, "OpenShift-B": openshiftPods, "OpenShift-C": thirdPods,
++	} {
 +		for _, spec := range specs {
 +			uid := spec.SecurityContext.RunAsUser
 +			if name == "Kubernetes" && (uid == nil || *uid != 10000) {
 +				t.Fatalf("Kubernetes UID=%v", uid)
 +			}
 +
-+			if name == "OpenShift" && uid != nil {
++			if name != "Kubernetes" && uid != nil {
 +				t.Fatalf("OpenShift UID override: %d", *uid)
 +			}
 +			assertNettestHardening(t, spec)
++		}
++	}
++}
++
++func assertUIDDiscoveryTarget(t *testing.T, captures []*uidPodCapture, target sy.ClusterIndex, build func()) {
++	t.Helper()
++
++	before := make([]int, len(captures))
++	for i, capture := range captures {
++		before[i] = capture.discoveryCount()
++	}
++
++	build()
++
++	for i, capture := range captures {
++		expected := before[i]
++		if sy.ClusterIndex(i) == target {
++			expected++
++		}
++
++		if actual := capture.discoveryCount(); actual != expected {
++			t.Errorf("target cluster %d: cluster %d discovery count=%d, want %d", target, i, actual, expected)
 +		}
 +	}
 +}
@@ -257,7 +312,7 @@ new file mode 100644
 +	preserveUIDTestGlobals(t)
 +
 +	for _, status := range []int32{http.StatusForbidden, http.StatusServiceUnavailable} {
-+		for _, builder := range []string{"nginx", "netshoot"} {
++		for _, builder := range []string{nginxBuilder, "netshoot"} {
 +			t.Run(fmt.Sprintf("%s/HTTP%d", builder, status), func(t *testing.T) {
 +				var captured uidPodCapture
 +				sy.KubeClients = []*kubernetes.Clientset{uidTestClient(t, false, status, &captured)}
@@ -279,7 +334,7 @@ new file mode 100644
 +					}
 +				}()
 +
-+				if builder == "nginx" {
++				if builder == nginxBuilder {
 +					f.NewNginxDeployment(sy.ClusterA)
 +				} else {
 +					f.NewNetShootDeploymentInNS(sy.ClusterA, "uid-proof")
@@ -294,6 +349,8 @@ new file mode 100644
 +	t.Helper()
 +
 +	oldClients, oldContext, oldGomega := sy.KubeClients, sy.TestContext, gomega.Default
++	contextCopy := *oldContext
++	sy.TestContext = &contextCopy
 +	t.Cleanup(func() {
 +		sy.KubeClients, sy.TestContext, gomega.Default = oldClients, oldContext, oldGomega
 +	})
@@ -340,7 +397,7 @@ new file mode 100644
 +}
 +
 +func TestNettestBuildersBoundDiscovery(t *testing.T) {
-+	for _, builder := range []string{"nginx", "netshoot"} {
++	for _, builder := range []string{nginxBuilder, "netshoot"} {
 +		t.Run(builder, func(t *testing.T) {
 +			preserveUIDTestGlobals(t)
 +			var captured uidPodCapture
@@ -369,7 +426,7 @@ new file mode 100644
 +}
 +
 +func TestNettestBuildersRejectZeroDiscoveryBudget(t *testing.T) {
-+	for _, builder := range []string{"nginx", "netshoot"} {
++	for _, builder := range []string{nginxBuilder, "netshoot"} {
 +		t.Run(builder, func(t *testing.T) {
 +			preserveUIDTestGlobals(t)
 +			var captured uidPodCapture
@@ -401,9 +458,58 @@ new file mode 100644
 +		g.Expect(failure).To(gomega.ContainSubstring(expected))
 +	}()
 +
-+	if builder == "nginx" {
++	if builder == nginxBuilder {
 +		f.NewNginxDeployment(sy.ClusterA)
 +	} else {
 +		f.NewNetShootDeploymentInNS(sy.ClusterA, "uid-proof")
++	}
++}
++
++func TestNettestBuildersRejectInvalidDiscoveryResponses(t *testing.T) {
++	for _, testCase := range []struct{ name, body, expected string }{
++		{"empty-object", `{}`, "Kind"},
++		{"json-null", `null`, "Kind"},
++		{"missing-kind", `{"groups":[{"name":"security.openshift.io"}]}`, "Kind"},
++		{"status-success", `{"apiVersion":"v1","kind":"Status","status":"Success"}`, "expected APIGroupList"},
++		{"pod-list", `{"apiVersion":"v1","kind":"PodList","items":[]}`, "PodList"},
++		{"malformed-json", `{"apiVersion":`, "json parse error"},
++		{"empty-body", ``, "Kind"},
++	} {
++		for _, builder := range []string{nginxBuilder, "netshoot"} {
++			t.Run(testCase.name+"/"+builder, func(t *testing.T) {
++				preserveUIDTestGlobals(t)
++				var captured uidPodCapture
++				sy.KubeClients = []*kubernetes.Clientset{uidTestClient(t, false, http.StatusOK, &captured, testCase.body)}
++				f := &lh.Framework{Framework: sy.NewBareFramework("uid-proof")}
++				assertUIDBuilderFailure(t, f, builder, testCase.expected)
++
++				if len(captured.snapshot()) != 0 {
++					t.Error("Deployment created from an invalid API group discovery response")
++				}
++			})
++		}
++	}
++}
++
++func TestNettestBuildersAcceptValidEmptyAPIGroupList(t *testing.T) {
++	for _, builder := range []string{nginxBuilder, "netshoot"} {
++		t.Run(builder, func(t *testing.T) {
++			preserveUIDTestGlobals(t)
++			var captured uidPodCapture
++			sy.KubeClients = []*kubernetes.Clientset{uidTestClient(t, false, http.StatusOK, &captured,
++				`{"apiVersion":"v1","kind":"APIGroupList","groups":[]}`)}
++
++			f := &lh.Framework{Framework: sy.NewBareFramework("uid-proof")}
++			if builder == nginxBuilder {
++				f.NewNginxDeployment(sy.ClusterA)
++			} else {
++				f.NewNetShootDeploymentInNS(sy.ClusterA, "uid-proof")
++			}
++
++			pods := captured.snapshot()
++			if len(pods) != 1 || pods[0].SecurityContext.RunAsUser == nil || *pods[0].SecurityContext.RunAsUser != 10000 {
++				t.Fatal("valid empty APIGroupList did not preserve plain-Kubernetes UID")
++			}
++		})
 +	}
 +}

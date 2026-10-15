@@ -5,33 +5,32 @@
   "client_go_version": "v0.35.8",
   "go_version": "go version go1.26.8-X:nodwarf5 linux/amd64",
   "candidate_source_sha256": {
-    "test/e2e/framework/deployments.go": "e2e83bccd75aa722da7814248c5451d44be5aed6cfdce736c591b242fbb1e7aa",
-    "test/unit/framework/deployments_uid_test.go": "90d4356974c793f5df8d27c3e685b911576d25865661e96ebbe7debebbb10108"
+    "test/e2e/framework/deployments.go": "1d05761e8f09c384a60f4ed3d07833cedf35a2a9bb8ac82ae5dfb6eee48cbff6",
+    "test/unit/framework/deployments_uid_test.go": "10c747741600fc2f40956ef0796890f15355ae7df5eca208958457fd5fcbd6c4"
   },
-  "patch_sha256": "eaa3171cbf54d20be1424eacc182d017e03a23cd87c56b1456ff552e557975a2",
-  "behavior": "Per target cluster, authenticated legacy JSON GET /apis with explicit context deadline from framework operation timeout; omit RunAsUser only when security.openshift.io is advertised, otherwise retain UID 10000. All discovery errors fail before Deployment POST. Zero operation timeout is an immediate deadline, never unbounded.",
-  "discovery_timeout_finding": "discovery-timeout-finding.json records the prior ServerGroups shared HTTP client timeout defect and focused 33-second reproduction.",
-  "production_change": "Only the two runAsUser expressions and new private helper/import; all other template fields match original or admission-checked references byte for byte.",
-  "test_behavior": [
-    "Both actual builders produce the right UID/hardening per target cluster, including alternate/repeated order",
-    "Fixture permits only legacy JSON /apis discovery; no /api dependency",
-    "Both builders reject HTTP403/503 with zero Deployment POSTs",
-    "Both builders cancel a stalled authenticated /apis request at one-second configured operation timeout; server observes request cancellation, zero Deployment POSTs",
-    "Both builders fail immediately for zero operation timeout, zero Deployment POSTs",
-    "Tests install a fresh gomega.Default and restore original object, clients and TestContext on cleanup; global mutations are serial"
+  "patch_sha256": "13e8f1673fa0eef901b626400e7d12863053eb3e6cdc1f7300e2c33f72bbd8e7",
+  "behavior": "Authenticated per-target legacy JSON GET /apis with explicit context deadline; decode without a supplied target type and require actual APIGroupList. Omit UID only when security.openshift.io is advertised, otherwise preserve UID10000. Errors abort before Deployment POST.",
+  "global_isolation": "Save original TestContext pointer; assign a separate struct copy before mutating primitive fields and restore original pointer on cleanup. Save original gomega.Default; install a fresh instance and restore original on cleanup. Restore KubeClients. No parallel global mutations.",
+  "coverage": [
+    "Three clients A/B/C, mixed platforms, alternate and repeat targets; after each builder exactly that target client discovery counter increments",
+    "Both builders preserve all other hardening",
+    "HTTP403/503 fail explicitly before POST",
+    "Authenticated stalled discovery canceled at1s, server observes cancellation, noPOST; zero budget immediate failure",
+    "Both builders reject {}, null, missing-kind group list, StatusSuccess, PodList, malformedJSON and emptybody beforePOST",
+    "Both builders accept typed valid emptyAPIGroupList and retain UID10000",
+    "Randomized repeated race suite checks order independence after fixing pointer-pointee contamination"
   ],
-  "test_fixture_limit": "Running Pod responses bypass controller execution; stalled handler has a five-second fallback so an accidentally unbounded candidate fails the test rather than hanging the suite.",
   "commands": {
-    "race": "go test -race -count=1 -v ./test/unit/framework",
+    "race": "go test -race -shuffle=on -count=3 -v ./test/unit/framework",
     "lint": "golangci-lint run ./test/e2e/framework ./test/unit/framework",
     "format": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go",
-    "export_openshift": "go run -mod=readonly ../export-uid-candidate.go ../bounded-candidate-openshift openshift",
-    "export_kubernetes": "go run -mod=readonly ../export-uid-candidate.go ../bounded-candidate-kubernetes kubernetes",
-    "patch_check": "git apply --check ../bounded-lighthouse-scc.patch from exact downloaded Lighthouse v0.23.4 module directory"
+    "export_openshift": "go run -mod=readonly ../export-uid-candidate.go ../validated-candidate-openshift openshift",
+    "export_kubernetes": "go run -mod=readonly ../export-uid-candidate.go ../validated-candidate-kubernetes kubernetes",
+    "patch_check": "git apply --check ../validated-lighthouse-scc.patch from exact downloaded Lighthouse v0.23.4 module directory"
   },
   "verification": {
     "race_exit_code": 0,
-    "race_log_sha256": "ec597adc529d14610eb76f482a49eebecae046961eebb4af00913926fd3c7cc8",
+    "race_log_sha256": "f693292af4ce598e6c1ed5fc7ab2d98f1b2e52394d4a43ec34e163c99a7107a8",
     "lint_exit_code": 0,
     "lint_issues": 0,
     "lint_log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47",
@@ -69,5 +68,5 @@
       }
     ]
   },
-  "limits": "Not a live QE or Kubernetes controller qualification. OpenShift needs ordinary valid namespace allocation and restricted-v2 access. Full make unit remains required when landing the Lighthouse change."
+  "limits": "Offline unit/fixture verification. Not live controller or QE qualification. Existing client-go credential plugins may not honor request cancellation. Root agent independently runs full shared unit gate in complete exact-base Git worktree; that result is separate evidence."
 }

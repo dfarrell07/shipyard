@@ -1,0 +1,49 @@
+[
+  {
+    "case": "community-0.23.2-no-root-group-netshoot",
+    "running": true,
+    "checks_exit": 0,
+    "http_responses": 0,
+    "command": [
+      "podman",
+      "run",
+      "--pull=never",
+      "--read-only",
+      "--read-only-tmpfs=false",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--memory=256m",
+      "--cpus=0.5",
+      "--userns=keep-id:uid=1001530000,gid=1001530000",
+      "--user",
+      "1001530000:1001530000",
+      "-d",
+      "quay.io/submariner/nettest@sha256:151e4b053fee45626936ccbbdf1a11633d336eb9bc432f8996dd1d45385400ef",
+      "sleep",
+      "600"
+    ]
+  },
+  {
+    "case": "community-0.23.2-no-root-group-nginx-demo",
+    "running": true,
+    "checks_exit": 0,
+    "http_responses": 8,
+    "command": [
+      "podman",
+      "run",
+      "--pull=never",
+      "--read-only",
+      "--read-only-tmpfs=false",
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges",
+      "--memory=256m",
+      "--cpus=0.5",
+      "--userns=keep-id:uid=1001530000,gid=1001530000",
+      "--user",
+      "1001530000:1001530000",
+      "-d",
+      "quay.io/submariner/nettest@sha256:151e4b053fee45626936ccbbdf1a11633d336eb9bc432f8996dd1d45385400ef",
+      "/app/simpleserver"
+    ]
+  }
+]

@@ -1,21 +1,178 @@
+-test.shuffle 1792082965893521800
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot
+--- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses (0.11s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot (0.02s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx (0.03s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot (0.01s)
+=== RUN   TestNettestBuildersRejectDiscoveryFailure
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503
+--- PASS: TestNettestBuildersRejectDiscoveryFailure (0.04s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503 (0.01s)
 === RUN   TestNettestDeploymentUIDPerCluster
---- PASS: TestNettestDeploymentUIDPerCluster (0.09s)
+--- PASS: TestNettestDeploymentUIDPerCluster (0.14s)
+=== RUN   TestNettestBuildersBoundDiscovery
+=== RUN   TestNettestBuildersBoundDiscovery/nginx
+=== RUN   TestNettestBuildersBoundDiscovery/netshoot
+--- PASS: TestNettestBuildersBoundDiscovery (2.02s)
+    --- PASS: TestNettestBuildersBoundDiscovery/nginx (1.01s)
+    --- PASS: TestNettestBuildersBoundDiscovery/netshoot (1.01s)
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot
+--- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList (0.04s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx (0.02s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot (0.01s)
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget/nginx
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget/netshoot
+--- PASS: TestNettestBuildersRejectZeroDiscoveryBudget (0.00s)
+    --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/netshoot (0.00s)
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot
+--- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses (0.10s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot (0.01s)
 === RUN   TestNettestBuildersRejectDiscoveryFailure
 === RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403
 === RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403
 === RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503
 === RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503
 --- PASS: TestNettestBuildersRejectDiscoveryFailure (0.02s)
-    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403 (0.01s)
     --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403 (0.00s)
-    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503 (0.01s)
-    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503 (0.00s)
+=== RUN   TestNettestDeploymentUIDPerCluster
+--- PASS: TestNettestDeploymentUIDPerCluster (0.18s)
 === RUN   TestNettestBuildersBoundDiscovery
 === RUN   TestNettestBuildersBoundDiscovery/nginx
 === RUN   TestNettestBuildersBoundDiscovery/netshoot
 --- PASS: TestNettestBuildersBoundDiscovery (2.01s)
-    --- PASS: TestNettestBuildersBoundDiscovery/nginx (1.01s)
+    --- PASS: TestNettestBuildersBoundDiscovery/nginx (1.00s)
     --- PASS: TestNettestBuildersBoundDiscovery/netshoot (1.00s)
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot
+--- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList (0.13s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx (0.07s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot (0.06s)
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget/nginx
+=== RUN   TestNettestBuildersRejectZeroDiscoveryBudget/netshoot
+--- PASS: TestNettestBuildersRejectZeroDiscoveryBudget (0.01s)
+    --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/netshoot (0.00s)
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx
+=== RUN   TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot
+--- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses (0.17s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-object/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/nginx (0.03s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/json-null/netshoot (0.03s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/missing-kind/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/status-success/netshoot (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/pod-list/netshoot (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/nginx (0.00s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/malformed-json/netshoot (0.03s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/nginx (0.01s)
+    --- PASS: TestNettestBuildersRejectInvalidDiscoveryResponses/empty-body/netshoot (0.01s)
+=== RUN   TestNettestBuildersRejectDiscoveryFailure
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503
+=== RUN   TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503
+--- PASS: TestNettestBuildersRejectDiscoveryFailure (0.02s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP403 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP403 (0.01s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/nginx/HTTP503 (0.00s)
+    --- PASS: TestNettestBuildersRejectDiscoveryFailure/netshoot/HTTP503 (0.00s)
+=== RUN   TestNettestDeploymentUIDPerCluster
+--- PASS: TestNettestDeploymentUIDPerCluster (0.09s)
+=== RUN   TestNettestBuildersBoundDiscovery
+=== RUN   TestNettestBuildersBoundDiscovery/nginx
+=== RUN   TestNettestBuildersBoundDiscovery/netshoot
+--- PASS: TestNettestBuildersBoundDiscovery (2.01s)
+    --- PASS: TestNettestBuildersBoundDiscovery/nginx (1.00s)
+    --- PASS: TestNettestBuildersBoundDiscovery/netshoot (1.00s)
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx
+=== RUN   TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot
+--- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList (0.03s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/nginx (0.01s)
+    --- PASS: TestNettestBuildersAcceptValidEmptyAPIGroupList/netshoot (0.02s)
 === RUN   TestNettestBuildersRejectZeroDiscoveryBudget
 === RUN   TestNettestBuildersRejectZeroDiscoveryBudget/nginx
 === RUN   TestNettestBuildersRejectZeroDiscoveryBudget/netshoot
@@ -23,4 +180,4 @@
     --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/nginx (0.00s)
     --- PASS: TestNettestBuildersRejectZeroDiscoveryBudget/netshoot (0.00s)
 PASS
-ok  	github.com/submariner-io/lighthouse/test/unit/framework	3.315s
+ok  	github.com/submariner-io/lighthouse/test/unit/framework	8.343s

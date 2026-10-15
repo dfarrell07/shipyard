@@ -23,7 +23,8 @@ and rebuild it: these builders are compiled into its discovery tests. Updating t
 
 The [implementation sequence](IMPLEMENTATION.md) specifies the helper, CI regression placement, dependency pin, fresh build,
 upstream/downstream delivery, and target-cluster acceptance checks.
-The [second expert audit](evidence/PLAN-AUDIT.md) records the timeout defect it found and the corrected candidate verification.
+The [latest expert audit](evidence/RELEVANT-CASES-AUDIT.md) maps relevant cases to evidence and remaining live checks.
+It also records corrections to discovery decoding, test isolation, and acceptance tooling.
 
 Shipyard 0.23 already corrected its independent helper YAML; the Lighthouse Go builders were missed by that follow-up.
 This branch contains notes, evidence, and a candidate patch only. The separate devel YAML change is tracked in

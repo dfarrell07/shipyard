@@ -17,16 +17,18 @@ Call the helper at the start of `NewNginxDeployment` and `NewNetShootDeploymentI
 
 The helper creates a context with `framework.TestContext.OperationTimeoutToDuration()` and defers its cancellation.
 Use the passed target cluster's authenticated `Discovery().RESTClient()` to GET `/apis`, set `Accept: application/json`,
-and decode into `metav1.APIGroupList` with `Do(ctx).Into(groups)`.
+and decode with `Do(ctx).Get()`. Require the returned object to be an actual `*metav1.APIGroupList` before inspecting it.
 Assert success using the framework's existing Gomega failure convention and the message
 `discover API groups for nettest UID selection`. A failure must stop the builder before its Deployment POST.
 Scan the returned groups by name: `security.openshift.io` means return `nil`; otherwise return `ptr.To(int64(10000))`.
 Assign that pointer to the existing pod-level `SecurityContext.RunAsUser` field. A nil pointer omits the field in the request.
 
-This reuses authentication without requiring SCC-list or authorization-review permissions. The explicit context bounds the
-request, rate-limit waits, and retries by the existing operation budget; a zero budget fails immediately rather than disabling
-the bound. Force legacy JSON so the reply is an APIGroupList even when the server supports aggregated discovery.
-HTTP/decode/transport errors must fail explicitly rather than select UID 10000.
+This reuses authentication without requiring SCC-list or authorization-review permissions. Context-aware HTTP requests,
+rate-limit waits, and retries obey the existing operation budget; a zero budget fails immediately rather than disabling it.
+Client-go credential programs and arbitrary transport hooks can ignore request cancellation; this helper does not repair that
+preexisting limitation. Force legacy JSON so the reply is an APIGroupList even with aggregated discovery support.
+HTTP/decode/type errors must fail explicitly rather than select UID 10000. In particular, decoding directly into a preallocated
+APIGroupList silently accepts `{}` or `null`; independent decoding rejects these invalid discovery replies.
 
 Do not use the earlier unbounded `ServerGroups()` candidate. Its assumed 32-second timeout does not hold for the framework's
 actual clientset construction: the supplied shared HTTP client can have timeout zero. The second audit reproduced a stalled
@@ -53,10 +55,14 @@ The committed regression should retain these checks:
 
 - Both builders omit UID on OpenShift and retain UID 10000 on plain Kubernetes, with all other hardening preserved.
 - Alternating and repeated target indices select the target's policy, catching an accidental global cache or cluster-A lookup.
+  Include ClusterC because the supported third-context cases use these builders too.
 - HTTP 403 and 503 produce the expected discovery failure and zero Deployment POSTs for both builders.
+- Invalid HTTP 200 bodies, absent type metadata, and wrong object types fail with zero Deployment POSTs; a correctly typed
+  empty APIGroupList remains a valid Kubernetes response.
 - A stalled `/apis` request is canceled within the configured budget for both builders, with zero Deployment POSTs; zero budget
   also fails immediately. Assert the requested path and legacy JSON Accept header.
 - HTTP capture is synchronized; tests restore clients, TestContext, and `gomega.Default` and do not mutate them in parallel.
+  TestContext is a pointer: assign a separate struct copy before changing fields, then restore the original pointer.
   Install a fresh Gomega instance for the panic handler instead of modifying the saved instance's handler.
 
 The fixture must request JSON explicitly and return typed Kubernetes Status errors; the real client can otherwise send protobuf
@@ -137,7 +143,11 @@ UID recorded. Then run all 14 previously failing discovery cases with the delive
 they must execute and pass, not disappear behind skips. Retain events and pod specs during execution, including any new failure.
 Use two invocations with swapped `--context`/`--tocontext` and distinct JUnit reports. Require both command exit codes to be zero
 and run the [case-identity checker](evidence/check_discovery_junit.py) against both reports. It checks each original case exactly
-once, rejects skips/failures/errors/retries and new reported failures, and prevents a passing count from substituting other cases.
+once, rejects skips/failures/errors, dry runs, declared suite retries, and new reported failures.
+The pinned Ginkgo JUnit format omits per-case attempt counts. Audit the landed discovery sources and invocation wrappers for
+per-spec retries, or retain independent per-case attempt evidence; JUnit alone cannot rule them out.
+Use the [relevant-case matrix](evidence/RELEVANT-CASES-AUDIT.md) for applicable three-cluster, IP-family, and feature e2e gates.
+Preserve the framework's actual namespace PSA labels; SCC checks do not qualify a restricted-PSA suite.
 The plain-Kubernetes/older-image regression remains covered by the candidate and legacy-image tests; a target rerun should
 also confirm that branch when a plain Kubernetes test cluster is available.
 

@@ -33,6 +33,14 @@ def main():
                 for node in case.findall(tag):
                     case.remove(node)
 
+    # This is an explicitly synthetic passing fixture: clear the original
+    # failing run's suite-success metadata as well as testcase failures.
+    for prop in passed.iter("property"):
+        if prop.get("name") == "SuiteSucceeded":
+            prop.set("value", "true")
+        if prop.get("name") == "SpecialSuiteFailureReason":
+            prop.set("value", "")
+
     checks = []
     with tempfile.TemporaryDirectory(prefix="acm48176-junit-check-") as temporary:
         directory = Path(temporary)
@@ -77,6 +85,30 @@ def main():
         variant("root_infrastructure_error", lambda root, parent, case: root.set("errors", "1"))
         variant("recovered_flaky_failure", lambda root, parent, case: ET.SubElement(case, "flakyFailure"))
         variant("suite_flake_retries_enabled", lambda root, parent, case: ET.SubElement(ET.SubElement(next(root.iter("testsuite")), "properties"), "property", name="FlakeAttempts", value="2"))
+        def mutate_property(root, name, value=None, remove=False, duplicate=False):
+            suite = next(root.iter("testsuite"))
+            group = suite.find("properties")
+            prop = next((p for p in group.findall("property") if p.get("name") == name), None)
+            if remove:
+                if prop is not None:
+                    group.remove(prop)
+            elif duplicate:
+                ET.SubElement(group, "property", name=name, value=value)
+            elif prop is None:
+                ET.SubElement(group, "property", name=name, value=value)
+            else:
+                prop.set("value", value)
+
+        for name in ("SuiteSucceeded", "DryRun", "SuiteHasProgrammaticFocus", "SpecialSuiteFailureReason", "FlakeAttempts"):
+            variant("missing_property_" + name,
+                    lambda root, parent, case, name=name: mutate_property(root, name, remove=True))
+            variant("duplicate_property_" + name,
+                    lambda root, parent, case, name=name: mutate_property(root, name, "false", duplicate=True))
+        for name, value in (("SuiteSucceeded", "false"), ("DryRun", "true"), ("DryRun", "garbage"),
+                            ("SuiteHasProgrammaticFocus", "true"), ("SpecialSuiteFailureReason", "infrastructure failure"),
+                            ("FlakeAttempts", "2"), ("FlakeAttempts", "garbage"), ("ReportWasTruncated", "true")):
+            variant("bad_property_" + name + "_" + value.replace(" ", "_"),
+                    lambda root, parent, case, name=name, value=value: mutate_property(root, name, value))
         check("second_direction_still_fails", good_a, attached, False)
         check("same_report_given_twice", good_a, good_a, False)
         check("missing_report_file", directory / "absent.xml", good_b, False)

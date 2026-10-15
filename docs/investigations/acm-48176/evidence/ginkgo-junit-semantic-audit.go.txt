@@ -1,0 +1,26 @@
+package main
+import (
+ "encoding/json"
+ "os"
+ "path/filepath"
+ "strings"
+ "time"
+ "github.com/onsi/ginkgo/v2/reporters"
+ "github.com/onsi/ginkgo/v2/types"
+)
+func main(){
+ var input struct {Failures []struct{Test string `json:"test"`} `json:"failures"`}
+ data,err:=os.ReadFile(os.Args[1]);if err!=nil{panic(err)};if err=json.Unmarshal(data,&input);err!=nil{panic(err)}
+ for _,mode:=range []string{"clean","dry-run","per-spec-retry","suite-unsuccessful"}{
+  report:=types.Report{SuiteDescription:"Submariner E2E suite",SuiteSucceeded:mode!="suite-unsuccessful",StartTime:time.Now(),RunTime:time.Second}
+  report.SuiteConfig=types.NewDefaultSuiteConfig();report.SuiteConfig.DryRun=mode=="dry-run"
+  for _,f:=range input.Failures {
+   text:=strings.TrimSuffix(strings.TrimPrefix(f.Test,"[It] ")," [service-discovery]")
+   spec:=types.SpecReport{LeafNodeType:types.NodeTypeIt,LeafNodeText:text,LeafNodeLabels:[]string{"service-discovery"},State:types.SpecStatePassed,NumAttempts:1,RunTime:time.Millisecond}
+   if mode=="per-spec-retry"{spec.NumAttempts=2;spec.MaxFlakeAttempts=2}
+   report.SpecReports=append(report.SpecReports,spec)
+  }
+  dir:=filepath.Join(os.Args[2],mode);if err=os.MkdirAll(dir,0700);err!=nil{panic(err)}
+  for _,name:=range []string{"a.xml","b.xml"}{if err=reporters.GenerateJUnitReport(report,filepath.Join(dir,name));err!=nil{panic(err)}}
+ }
+}
