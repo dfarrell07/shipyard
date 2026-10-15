@@ -13,4 +13,3 @@ original code                   0 Passed | 3 Failed
 always query cluster A          1 Passed | 2 Failed
 fall back to 10000 on errors    2 Passed | 1 Failed
 netshoot ignores the helper     2 Passed | 1 Failed
-netshoot drops runAsNonRoot     2 Passed | 1 Failed

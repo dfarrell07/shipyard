@@ -28,16 +28,16 @@ branch's framework API:
 
 On `devel` and `release-0.23`–`0.25`, the commit adds a Ginkgo suite in `test/unit/framework`, because the shared unit runner
 skips `test/e2e`. An HTTP fixture serves discovery, records created Deployments, and reports a Running pod so the builder's wait
-completes. For each builder it checks per-cluster selection: UID unset on the OpenShift cluster, 10000 on the other, one lookup
-each, hardening unchanged. One more spec checks that a discovery failure stops the test before any Deployment is created. Retries
-and timeouts come from Shipyard's `AwaitUntil` and client-go, so the suite does not re-test them.
+completes. For each builder, one spec checks that the UID is unset on the OpenShift cluster and 10000 on the other. One more
+checks that a discovery failure stops the test before any Deployment is created. Retries and timeouts come from Shipyard's
+`AwaitUntil` and client-go, so the suite does not re-test them.
 
 ## Verification
 
 All nine branches build, and lint is clean apart from pre-existing findings in untouched files (0.18's v1 lint config is left to
 its CI). The suite passes with `-race` and randomized order, and every spec fails against the branch's original code. On `devel`
 it also rejects plausible wrong implementations: querying the wrong cluster, falling back to 10000 on errors, or a builder that
-ignores the helper or drops `runAsNonRoot` ([log](evidence/branch-verification.log)).
+ignores the helper ([log](evidence/branch-verification.log)).
 
 Against a real kube-apiserver, as an unprivileged user, the helper returned 10000 on a plain server and nil once a
 `security.openshift.io` group was served (here via a CRD). It failed with `context deadline exceeded` under a zero timeout
