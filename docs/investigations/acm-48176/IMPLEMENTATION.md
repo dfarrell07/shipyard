@@ -29,6 +29,9 @@ Client-go credential programs and arbitrary transport hooks can ignore request c
 preexisting limitation. Force legacy JSON so the reply is an APIGroupList even with aggregated discovery support.
 HTTP/decode/type errors must fail explicitly rather than select UID 10000. In particular, decoding directly into a preallocated
 APIGroupList silently accepts `{}` or `null`; independent decoding rejects these invalid discovery replies.
+The caller needs GET access to the non-resource URL `/apis`. Upstream's default discovery role grants this to authenticated
+users, but verify the actual identity on a customized cluster; a denial remains an explicit failure. See the pinned
+[discovery role and binding](https://github.com/kubernetes/kubernetes/blob/v1.32.13/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go#L202).
 
 Do not use the earlier unbounded `ServerGroups()` candidate. Its assumed 32-second timeout does not hold for the framework's
 actual clientset construction: the supplied shared HTTP client can have timeout zero. The second audit reproduced a stalled
@@ -69,8 +72,10 @@ The fixture must request JSON explicitly and return typed Kubernetes Status erro
 or decode an untyped fixture error differently. Verify the expected failure text/status, not just that some panic occurred.
 
 Run the targeted package with `-race`, lint both changed packages, and run the repository's normal `make unit` gate when landing
-the Lighthouse change. Confirm its log includes `./test/unit/framework`. The candidate's targeted tests, lint, formatting, and
-actual shared-runner package selection have already passed; see the [audit](evidence/EXPERT-AUDIT.md).
+the Lighthouse change. Confirm its log includes `./test/unit/framework`. The candidate's targeted tests, lint, and formatting pass.
+The actual shared unit script also passed on a complete exact-base Git worktree: all six packages, including the new regression
+and nested CoreDNS modules, with race detection and 291 Ginkgo specs. See [provenance](evidence/full-unit-provenance.json) and
+[summary](evidence/full-unit-summary.log). This host execution does not replace the normal landing CI/container gate.
 Export both platforms again after any implementation adjustment. OpenShift output must equal the admission-checked no-UID
 templates; Kubernetes output must equal the original v0.23.4 templates. This detects unintended manifest changes.
 

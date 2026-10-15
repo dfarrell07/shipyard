@@ -45,6 +45,7 @@ a_pods_pid=$!
 
 Repeat for all five resources and both contexts. The namespace collector automatically applies `e2e-framework=discovery`;
 the other four resources use all namespaces. `--kubeconfig` is optional; otherwise normal kubeconfig loading applies.
+For a three-context e2e extension, add all five collectors for ClusterC too; ten processes describes the original two-cluster run.
 Keep stdout and stderr local: objects, API errors, and client diagnostics can contain private metadata.
 The JSON output is a stream containing the initial LIST and subsequent object-change events, not one standalone document.
 

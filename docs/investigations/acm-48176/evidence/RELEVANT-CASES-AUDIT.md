@@ -24,6 +24,16 @@ budgets, valid responses, and unchanged hardening remain covered. The [current p
 Lighthouse v0.23.4; lint and formatting pass. Both platforms' emitted pod templates still match the earlier references byte for
 byte, so the admission/runtime evidence remains applicable.
 
+The actual shared unit script subsequently passed on the complete exact-base Git worktree, including nested modules:
+six packages with race detection, 291 Ginkgo specs, and the actual builder regression package. This replaces enumeration-only
+confidence with a real run of the test payload: [summary](full-unit-summary.log), [provenance](full-unit-provenance.json).
+It used host Go rather than the landing CI/container wrapper; that distinction and the intentionally excluded e2e tests remain explicit.
+
+Discovery requires authenticated GET `/apis`; the upstream default
+[role](https://github.com/kubernetes/kubernetes/blob/v1.32.13/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go#L202) and
+[binding](https://github.com/kubernetes/kubernetes/blob/v1.32.13/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go#L591)
+provide it. Customized discovery authorization must be checked explicitly; HTTP 403 is already a negative regression case.
+
 The deadline claim is deliberately narrower now: an actual two-second exec credential program exceeded a one-second context
 before returning. Existing client-go authentication does not cancel arbitrary programs. The helper still prevents Deployment
 creation afterward, but does not promise to terminate arbitrary credential hooks. Repairing that client-wide behavior is outside
