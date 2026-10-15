@@ -7,9 +7,9 @@
 | SCC admission rejects the original, admits the corrected version, and a nonroot-v2 grant admits the original | [admission-check.go.txt](admission-check.go.txt), [admission-check.log](admission-check.log) |
 | The 0.23.2 nettest image defaults to root; 0.23.3 and later use UID 10000 | [image-users.json](image-users.json) |
 | The hardened helpers work under an arbitrary UID with a read-only root and no capabilities | [runtime-check.py](runtime-check.py), [runtime-results.json](runtime-results.json) |
-| The helper classifies a real kube-apiserver correctly as an unprivileged user | [devel check](real-apiserver-check.go.txt) and [log](real-apiserver-devel.log); [0.23 check](real-apiserver-check-0.23.go.txt) and [log](real-apiserver-0.23.log) |
+| The helper classifies a real kube-apiserver correctly as an unprivileged user | [real-apiserver-check.go.txt](real-apiserver-check.go.txt), [devel log](real-apiserver-devel.log), [0.23 log](real-apiserver-0.23.log) |
 | Every branch builds, passes, and fails on its original code | [branch-verification.log](branch-verification.log) |
-| The fix for each branch, and the PR body | [lighthouse-branches](lighthouse-branches) |
+| The PR body for every branch | [pr-body.txt](pr-body.txt) |
 
 ## Reproducing
 
@@ -22,7 +22,8 @@
 - **Runtime:** `python3 runtime-check.py` with rootless Podman and the two pinned images it names.
 - **Real kube-apiserver:** start envtest's etcd and kube-apiserver with [real-apiserver-run.sh.txt](real-apiserver-run.sh.txt).
   Write kubeconfigs for an admin token and a plain-user token, copy the check into Lighthouse `test/e2e/framework` as an internal
-  test, and run it with `ADMIN_KUBECONFIG`/`USER_KUBECONFIG` and `GOFLAGS=-mod=mod`.
+  test, and run it with `ADMIN_KUBECONFIG`/`USER_KUBECONFIG` and `GOFLAGS=-mod=mod`. On `release-0.23`, drop the helper's `ctx`
+  argument and use `ptr.To(true)` instead of `new(true)`.
 
 ## Limits
 

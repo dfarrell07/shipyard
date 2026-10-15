@@ -57,6 +57,6 @@
     "namespace_uid_range_fixture": "1001530000/10000"
   },
   "branch_commits": {
-    "note": "One commit per Lighthouse branch; see lighthouse-branches/*.patch and branch-verification.log"
+    "note": "One commit per Lighthouse branch, pushed to github.com/dfarrell07/lighthouse as nettest-scc-uid-<branch>; see branch-verification.log"
   }
 }

@@ -1,0 +1,6 @@
+OpenShift's restricted-v2 SCC rejects the fixed `runAsUser: 10000` on the netshoot and nginx-demo helper Deployments, so the
+ReplicaSet controller creates no pods and the service discovery tests fail with "Actual pod count 0". This leaves `runAsUser`
+unset on clusters that serve the `security.openshift.io` API group, so SCC admission assigns a UID from the namespace range,
+and keeps 10000 elsewhere for older nettest images that default to root. See the commit message for details.
+
+Tests are in `test/unit/framework`, because the unit runner skips `test/e2e`.

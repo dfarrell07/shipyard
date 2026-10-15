@@ -15,8 +15,9 @@ It uses the raw request rather than `Discovery().ServerGroups()` because only th
 lookup runs per call and per target cluster, with no cache. Discovery only identifies the platform; the OpenShift path assumes
 the default restricted-v2 grant and namespace UID allocation.
 
-Each branch has one commit, "Let OpenShift assign nettest helper pod UIDs" ([patches](evidence/lighthouse-branches)). The code
-follows each branch's framework API:
+Each branch has one commit, "Let OpenShift assign nettest helper pod UIDs", pushed to
+[`dfarrell07/lighthouse`](https://github.com/dfarrell07/lighthouse/branches) as `nettest-scc-uid-<branch>`. The code follows each
+branch's framework API:
 
 | Branches | Variant |
 | --- | --- |
@@ -26,26 +27,17 @@ follows each branch's framework API:
 | `release-0.18` | As above, computing the timeout itself; Shipyard v0.18.5 lacks `OperationTimeoutToDuration()` |
 
 On `devel` and `release-0.23`–`0.25`, the commit adds a Ginkgo suite in `test/unit/framework`, because the shared unit runner
-skips `test/e2e`. An HTTP fixture serves
-discovery, records created Deployments, and reports a Running pod so the builder's wait completes. For both builders it checks:
-
-- per-cluster selection: UID unset on the OpenShift cluster, 10000 on the other, one lookup each, hardening unchanged;
-- a retried transient 503;
-- failure without a Deployment on HTTP 403 and on a non-`APIGroupList` response;
-- failure within the timeout when discovery stalls.
+skips `test/e2e`. An HTTP fixture serves discovery, records created Deployments, and reports a Running pod so the builder's wait
+completes. For each builder it checks per-cluster selection: UID unset on the OpenShift cluster, 10000 on the other, one lookup
+each, hardening unchanged. For the shared helper it checks a retried transient 503, failure without a Deployment on HTTP 403 and
+on a non-`APIGroupList` response, and failure within the timeout when discovery stalls.
 
 ## Verification
 
-All nine branches build. The suite passed 10/10 with `-race` and randomized order on every branch, including 0.18–0.22 before it
-was dropped there, and every spec fails against the branch's original code ([log](evidence/branch-verification.log)). Lint is
-clean on 0.19–0.25, ignoring pre-existing findings in untouched files. 0.18 uses a v1 lint config, so its branch CI is the lint
-check. On `devel` the suite also rejects five plausible wrong implementations:
-
-- always querying cluster A;
-- falling back to 10000 on errors;
-- an unbounded request;
-- no retry;
-- dropping `runAsNonRoot` (from the first version of the suite).
+All nine branches build, and lint is clean apart from pre-existing findings in untouched files (0.18's v1 lint config is left to
+its CI). The suite passes with `-race` and randomized order, and every spec fails against the branch's original code. On `devel`
+it also rejects plausible wrong implementations, such as querying the wrong cluster or falling back to 10000 on errors
+([log](evidence/branch-verification.log)).
 
 Against a real kube-apiserver, as an unprivileged user, the helper returned 10000 on a plain server and nil once a
 `security.openshift.io` group was served (here via a CRD). It failed with `context deadline exceeded` under a zero timeout
@@ -57,7 +49,7 @@ admission check admits.
 
 The commits are per-branch ports, not cherry-picks of a merged `devel` commit, so open all nine PRs together and link them.
 The original hardening went the same way (#2228–#2235). Merge `release-0.23`, `release-0.22`, and `release-0.24` first: their
-downstream releases are waiting on this fix. If review changes the code, apply the change to each variant and re-export the patches.
+downstream releases are waiting on this fix. If review changes the code, apply the change to each variant.
 
 The `release-0.18`–`0.22` commits change only `deployments.go`. Their shared unit runner skips any test directory whose test files
 mention `e2e`, and the suite imports a `test/e2e` package, so CI there could never run it. Their PR bodies point to the `devel`
@@ -81,10 +73,7 @@ Downstream 0.22.2 (ACM-45070, in progress) and 0.24.2 (ACM-47692) pin affected L
 `release-0.22` and `release-0.24` pick up the fix, and tell their release owners. No downstream production release contains
 the bug.
 
-QE should take Subctl from the rebuilt stage image by digest, and `go version -m` on it should show the fixed Lighthouse version.
-
-For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only changes and appends to
-`dist/subctl-checksums.txt`. Konflux builds with `go build`, so it is not affected.
+QE should take Subctl from the rebuilt stage image by digest; `go version -m` on it should show the fixed Lighthouse version.
 
 ## Follow-ups
 
@@ -92,26 +81,23 @@ For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only 
   and v0.26.0-m0. The note: "`subctl verify --only service-discovery` fails on OpenShift. Upgrade Subctl; deployed Submariner is
   unaffected."
 - **Shipyard #2618:** it still sets UID 10000 in `devel`'s CI YAMLs. It is unrelated to `subctl verify`; merge it separately.
-- **Custom SCCs:** where an administrator grants anyuid or a custom higher-priority SCC to every user, an unset `runAsUser` leaves
-  the image's user in effect. Root-default images (0.23.2 and earlier) then fail `runAsNonRoot`. This is out of scope.
 
 ## Publishing commands (developer)
 
 The branches are already pushed to `dfarrell_lh`; the loop's push only matters if a commit changes. The loop uses the
-[shared PR body](evidence/lighthouse-branches/pr-body.txt). On `release-0.18`–`0.22` it replaces the test paragraph with a pointer
-to the `devel` PR. It stops at the first failure.
+[shared PR body](evidence/pr-body.txt), replaces its test line on `release-0.18`–`0.22` with a pointer to the `devel` PR, and
+stops at the first failure.
 
 ~~~bash
-ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence/lighthouse-branches
+ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence
 session=https://claude.ai/code/session_01YTdbc3vVeY8XMVvhVmqgWD
 for b in devel release-0.25 release-0.24 release-0.23 release-0.22 release-0.21 release-0.20 release-0.19 release-0.18; do
   cd ~/go/src/submariner-io/.worktrees/acm-48176-exec/$b || break
   body=$(mktemp)
-  grep -v "^$session" "$ev/pr-body.txt" > "$body"
+  cp "$ev/pr-body.txt" "$body"
   case $b in
   release-0.1[89] | release-0.2[012])
-    sed -i '/^The new Ginkgo suite/,/^$/d' "$body"
-    printf '\nThis branch has the code change only: its unit runner skips the regression suite, which is in the `devel` PR.\n' >> "$body"
+    sed -i 's|^Tests are in .*|This branch has the code change only; its unit runner cannot run the tests, which are in the `devel` PR.|' "$body"
     ;;
   esac
   printf '\n%s\n' "$session" >> "$body"
