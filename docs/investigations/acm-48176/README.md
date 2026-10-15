@@ -1,66 +1,54 @@
-# ACM-48176: nettest discovery failure
+# ACM-48176: nettest helper pods rejected on OpenShift
 
-Fix the UID selection in Lighthouse's `NewNginxDeployment` and `NewNetShootDeploymentInNS`, then rebuild Subctl with that change.
-The [candidate patch](evidence/lighthouse-scc.patch) is ready for review against Lighthouse v0.23.4.
-Every Lighthouse branch has the same defect, and ACM-48194 is a duplicate report of it.
-This branch contains the plan, candidate, and evidence; the release change and live QE qualification remain outstanding.
+**Status:** diagnosed offline; fix committed locally for all nine Lighthouse branches, not yet pushed; QE confirmation pending.
+ACM-48194 is a duplicate.
 
-## Proposed fix
+## What fails
 
-Choose the pod's `RunAsUser` separately for each target cluster:
+`subctl verify --only service-discovery` on OpenShift 4.19 and 4.20 fails 14 cases while setting up its helper Deployments,
+before any DNS check runs. The [attached run](evidence/attachment-analysis.json) shows:
 
-| Target | UID selection |
+- All 14 helper Deployment creates (`nginx-demo` on both clusters, `netshoot` on the 4.20 cluster) end with zero pods.
+- All 4 StatefulSets in the same namespaces reach Running. They use the same image, service account, and `nginx-demo` command,
+  but have no securityContext.
+
+Zero Pod objects means the pods were never admitted. A crashing image would still leave Pods behind.
+
+## Cause
+
+Security hardening in Lighthouse v0.23.2 (present on every branch) set `runAsUser: 10000` on the pods of `NewNginxDeployment` and
+`NewNetShootDeploymentInNS`. OpenShift's default restricted-v2 SCC only admits UIDs from the namespace's allocated range. The
+ReplicaSet controller creates these pods, and it has only the stock SCC grants, so every pod create is rejected.
+The connectivity tests still pass because their pods are created directly by the cluster-admin user, whose SCC access admits UID 10000.
+
+Running the real OpenShift admission code on the exact Deployments rejects the original with
+`restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges`, and admits it once `runAsUser` is removed
+([check](evidence/admission-check.log)).
+
+QE never passed these builders on OpenShift: 0.23.2 was never released to production, and 0.23.4 is the first QE run.
+The earlier fix attempt changed only Shipyard's CI YAML files, which `subctl verify` does not use.
+
+## Fix
+
+For each target cluster, the builders query API discovery:
+
+| Target cluster | Pod `runAsUser` |
 | --- | --- |
-| API discovery advertises `security.openshift.io` | Omit the UID; let SCC admission assign it |
-| Other Kubernetes clusters | Retain UID 10000 |
+| Serves the `security.openshift.io` API group | Unset; SCC admission assigns a UID from the namespace range |
+| Anything else | 10000, as today |
 
-Use authenticated discovery with the operation timeout and reject invalid responses and request errors.
-Preserve the other hardening settings.
-The explicit UID remains necessary for older nettest images, including 0.23.2, which default to root and would otherwise fail
-`runAsNonRoot` on plain Kubernetes. See the [image compatibility evidence](evidence/release-image-platform-audit.json).
+Plain Kubernetes keeps 10000 because Subctl uses the nettest image of the deployed Submariner version, and images up to 0.23.2
+default to root ([image users](evidence/image-users.json)). Without an explicit UID, `runAsNonRoot` would reject them. The lookup
+is bounded by the operation timeout and fails the test if discovery fails. All other hardening is unchanged.
 
-These builders are compiled into Subctl. Updating an image or Shipyard YAML does not deliver this correction.
+The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl; no image or operator change is involved.
 
-## Why this fits the report
+## Next steps
 
-The attached `e2e.zip` shows 14 failures during helper Deployment setup, before DNS assertions: ten find zero `nginx-demo` pods,
-and four find zero `netshoot` pods. Every helper Deployment in the run failed, on both the 4.19 and 4.20 clusters. Every StatefulSet
-reached Running in the same namespaces, with the same image, service account, and `nginx-demo` command but no securityContext.
-Zero matching Pod objects means no helper Pod was admitted; the image did not crash. See the [attachment analysis](evidence/attachment-analysis.json)
-and the [third audit](evidence/THIRD-AUDIT.md#re-derived-from-the-attachment).
+1. QE reproduces the rejection in scratch namespaces, which takes minutes: [QE step 1](QE-VALIDATION.md#1-reproduce-the-rejection).
+2. Open the nine Lighthouse PRs together, `release-0.23` first to merge ([plan](PLAN.md)).
+3. The release owner chooses a 0.23.4 Subctl respin or 0.23.5.
+4. QE accepts the rebuilt Subctl: all 14 cases pass in both directions ([QE steps 3–4](QE-VALIDATION.md#3-run-discovery-with-the-fixed-subctl)).
+5. Publish a known-issue note for the affected shipped Subctl releases.
 
-Glasswing hardening fixed these builders' UID at 10000. OpenShift SCC admission can reject that UID outside the namespace range;
-the offline admission checks reproduce rejection and successful SCC defaulting after the correction. Passing directly created
-connectivity Pods do not validate the ReplicaSet controller's SCC permissions.
-
-The hardened builders first shipped in 0.23.2, which never reached production, so no earlier QE pass contradicts this. The second
-attempt fixed only Shipyard's CI YAMLs, which `subctl verify` does not use.
-
-**UID rejection remains the leading explanation, not a confirmed QE admission event.** The archive lacks ReplicaSet events,
-selected SCCs, namespace allocations, the exact nettest digest, and the executable checksum. The QE procedure's first step
-reproduces the controller failure in minutes with the [exact original Deployments](evidence/repro/original).
-
-## Validation so far
-
-| Check | Result and evidence |
-| --- | --- |
-| OpenShift admission and namespace allocation | 66 expected outcomes on pinned 4.19/4.20 code: [admission audit](evidence/EXPERT-AUDIT.md) |
-| Exact Deployments and nonroot-v2 control | Original rejected, corrected and nonroot-v2-granted admitted: [third audit](evidence/THIRD-AUDIT.md) |
-| Current and legacy images | 18 local runtime cases, 72 HTTP responses: [coverage and limits](evidence/RELEVANT-CASES-AUDIT.md) |
-| Shared unit runner | Six packages pass with race detection, 291 Ginkgo specs plus builder regressions: [summary](evidence/full-unit-summary.log) |
-| Subctl integration | Fresh build, module inspection, CLI smoke, and template comparisons pass: [provenance](evidence/subctl-validated-build-provenance.json) |
-
-These checks support restricted-v2 access with valid namespace allocation. Custom SCCs, v3-only policies, and native
-runtime/feature coverage are detailed in the [case matrix](evidence/RELEVANT-CASES-AUDIT.md#coverage-and-its-practical-limits).
-Local checks do not establish controller behavior or end-to-end DNS success on the failing clusters.
-
-## Remaining steps
-
-1. Have QE run the scratch-namespace reproduction on both clusters to establish the actual failure cause.
-2. Land the Lighthouse correction on `devel` and every affected release branch, pin it in Subctl, and build the delivered artifact.
-3. Decide between a 0.23.4 Subctl respin and 0.23.5, and add a known-issue note for shipped releases.
-4. Verify Running helpers under the expected SCC/UID, then require all 14 original cases to pass in both cluster directions.
-
-Commits for all nine Lighthouse branches are prepared and verified locally; see the [execution runbook](EXECUTION.md).
-Follow the [implementation plan](IMPLEMENTATION.md) for code and delivery, and the [QE procedure](QE-VALIDATION.md) for capture,
-commands, and acceptance. Detailed review history and reproductions remain in the [audit evidence](evidence/RELEVANT-CASES-AUDIT.md).
+The [evidence index](evidence/README.md) maps each claim to its supporting files.

@@ -41,7 +41,7 @@
     }
   },
   "admission_check": {
-    "library": "github.com/openshift/apiserver-library-go f0d44ef6e53b49bd864c035752191a85b293af14 (same pin as admission-provenance.json)",
+    "library": "github.com/openshift/apiserver-library-go f0d44ef6e53b49bd864c035752191a85b293af14",
     "policies_commit": "openshift/cluster-kube-apiserver-operator 3915db668832c6d730f0ba4fe87604564204ff46 bindata/bootkube/scc-manifests",
     "policy_sha256": {
       "restricted-v2": "c68fbfc04cf0373b800a36e3bdc7559ce1f3868a6d083fef5dc50e0d5e1d8d8e",
@@ -50,9 +50,9 @@
       "privileged": "b937b3aec8125a8c0d462c26787c445c85550bc8ef5eefb2e32e2e4b7616583e",
       "nonroot-v2": "ccf6467b8917421c224c4d08cda991d3270e12da649ac01fc12105582d08c4d9"
     },
-    "source": "admission-nonroot-check.go.txt, copied to pkg/securitycontextconstraints/sccadmission/ and run with ACM_AUDIT_DIR containing scc/*.yaml and manifests/{original,corrected}",
-    "command": "GOWORK=off GOFLAGS=-mod=vendor go test -vet=off ./pkg/securitycontextconstraints/sccadmission -run TestACM48176Audit3 -v -count=1",
-    "log": "admission-nonroot-check.log",
+    "source": "admission-check.go.txt, copied to pkg/securitycontextconstraints/sccadmission/ and run with ACM_AUDIT_DIR containing the five policy YAMLs under scc/ and a copy of repro/",
+    "command": "GOWORK=off GOFLAGS=-mod=vendor go test -vet=off ./pkg/securitycontextconstraints/sccadmission -run TestACM48176Admission -v -count=1",
+    "log": "admission-check.log",
     "requester": "system:serviceaccount:kube-system:replicaset-controller",
     "namespace_uid_range_fixture": "1001530000/10000"
   },
