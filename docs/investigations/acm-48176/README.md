@@ -1,7 +1,7 @@
 # ACM-48176: nettest helper pods rejected on OpenShift
 
 **Status:** diagnosed offline; fix pushed to `dfarrell07/lighthouse` as `nettest-scc-uid-<branch>` for all nine branches, PRs not
-opened; QE confirmation pending.
+opened.
 ACM-48194 is a duplicate.
 
 ## What fails
@@ -47,10 +47,12 @@ The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No 
 
 ## Next steps
 
-1. **QE** reproduces the rejection in scratch namespaces, which takes minutes: [QE step 1](QE-VALIDATION.md#1-reproduce-the-rejection).
-2. **Developer** opens the nine Lighthouse PRs together and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
-3. **Release owners** ship the fix in 0.23.5, and hold downstream 0.22.2 and 0.24.2 until they include it ([delivery](PLAN.md#delivering-subctl)).
-4. **QE** accepts the rebuilt Subctl: all 14 cases pass in both directions ([QE steps 3–4](QE-VALIDATION.md#3-run-discovery-with-the-fixed-subctl)).
-5. **Developer** adds a known-issue note to the affected upstream Subctl releases.
+1. **Developer** opens the nine Lighthouse PRs together and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
+2. **Release owners** ship the fix in 0.23.5, and hold downstream 0.22.2 and 0.24.2 until they include it ([delivery](PLAN.md#delivering-subctl)).
+3. **QE** reruns its usual Submariner job with the rebuilt Subctl. All 14 cases should pass; that confirms the fix.
+4. **Developer** adds a known-issue note to the affected upstream Subctl releases.
+
+If the cases still fail, `oc create` the [original Deployments](evidence/repro/original), with `NETTEST_IMAGE` replaced, in a
+namespace with the e2e framework's labels. Their ReplicaSets report the admission decision directly.
 
 The [evidence index](evidence/README.md) maps each claim to its supporting files.

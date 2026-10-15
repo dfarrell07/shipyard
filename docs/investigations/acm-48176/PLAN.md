@@ -81,6 +81,8 @@ Downstream 0.22.2 (ACM-45070, in progress) and 0.24.2 (ACM-47692) pin affected L
 `release-0.22` and `release-0.24` pick up the fix, and tell their release owners. No downstream production release contains
 the bug.
 
+QE should take Subctl from the rebuilt stage image by digest, and `go version -m` on it should show the fixed Lighthouse version.
+
 For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only changes and appends to
 `dist/subctl-checksums.txt`. Konflux builds with `go build`, so it is not affected.
 
@@ -95,8 +97,9 @@ For local builds, use a fresh checkout. Subctl's Makefile ignores `go.mod`-only 
 
 ## Publishing commands (developer)
 
-The branches are already pushed to `dfarrell_lh`, so the loop's push is a no-op unless a commit changes. The loop uses the [shared PR body](evidence/lighthouse-branches/pr-body.txt). It appends
-the explicit test run on `release-0.18`–`0.22` and stops at the first failure.
+The branches are already pushed to `dfarrell_lh`; the loop's push only matters if a commit changes. The loop uses the
+[shared PR body](evidence/lighthouse-branches/pr-body.txt), appends the explicit test run on `release-0.18`–`0.22`, and stops at
+the first failure.
 
 ~~~bash
 ev=~/go/src/submariner-io/shipyard/docs/investigations/acm-48176/evidence/lighthouse-branches

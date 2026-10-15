@@ -2,7 +2,7 @@
 
 | Claim | Files |
 | --- | --- |
-| The QE run fails 14 cases at helper setup; every helper Deployment gets zero pods; every StatefulSet runs | [attachment-analysis.json](attachment-analysis.json), [provenance.json](provenance.json) |
+| The attached QE run fails 14 cases at helper setup; every helper Deployment gets zero pods; every StatefulSet runs | [attachment-analysis.json](attachment-analysis.json), [provenance.json](provenance.json) |
 | These are the exact Deployments the v0.23.4 builders create | [repro/original](repro/original), from [export-deployments.go.txt](export-deployments.go.txt) |
 | SCC admission rejects the original, admits the corrected version, and a nonroot-v2 grant admits the original | [admission-check.go.txt](admission-check.go.txt), [admission-check.log](admission-check.log) |
 | The 0.23.2 nettest image defaults to root; 0.23.3 and later use UID 10000 | [image-users.json](image-users.json) |
@@ -10,7 +10,6 @@
 | The helper classifies a real kube-apiserver correctly as an unprivileged user | [devel check](real-apiserver-check.go.txt) and [log](real-apiserver-devel.log); [0.23 check](real-apiserver-check-0.23.go.txt) and [log](real-apiserver-0.23.log) |
 | Every branch builds, passes, and fails on its original code | [branch-verification.log](branch-verification.log) |
 | The fix for each branch, and the PR body | [lighthouse-branches](lighthouse-branches) |
-| QE acceptance of the JUnit reports | [check_discovery_junit.py](check_discovery_junit.py) |
 
 ## Reproducing
 
@@ -27,7 +26,7 @@
 
 ## Limits
 
-- Nothing has run on an OpenShift cluster yet. The admission check uses fixture grants and namespace allocation; QE step 1
+- Nothing has run on an OpenShift cluster yet. The admission check uses fixture grants and namespace allocation; QE's rerun
   supplies the live result.
 - 4.19 has no restricted-v3. An earlier run with 4.19's policy set gave the same restricted-v2 results.
 - The runtime checks used rootless Podman, not CRI-O.
