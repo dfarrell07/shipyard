@@ -2,6 +2,7 @@
 
 Deliver the [Lighthouse v0.23.4 candidate](evidence/lighthouse-scc.patch) through Subctl's compiled discovery tests.
 Use isolated checkouts and `GOWORK=off` throughout Go checks and builds.
+Every Lighthouse branch has the defect, so land it on `devel` first and backport it to each maintained branch (section 2).
 
 ## 1. Change and test the Lighthouse builders
 
@@ -42,11 +43,34 @@ must match the admission-checked no-UID templates; Kubernetes output must match 
 The [candidate checks](evidence/candidate-provenance.json) and [complete host unit run](evidence/full-unit-provenance.json) pass;
 landing CI/container validation remains required.
 
-## 2. Pin and deliver a fresh Subctl executable
+## 2. Land on every affected branch
 
-Land the Lighthouse fix on `release-0.23` through the normal upstream/backport process. Record its commit and publish an immutable
-tag or canonical Go pseudo-version. Update Subctl's direct Lighthouse requirement and required `go.sum` entries; review any
-transitive changes separately. The release must use the published dependency rather than a local replacement.
+The [third audit](evidence/THIRD-AUDIT.md#scope-the-earlier-plan-understated) found UID 10000 on all nine Lighthouse branches.
+Affected Subctl releases are v0.22.2, v0.23.2, v0.23.4, v0.24.2, v0.25.0-rc1, and v0.26.0-m0. Port per branch:
+
+| Branches | Adaptation |
+| --- | --- |
+| `devel`, `release-0.25`, `release-0.24` | Port by hand; Go 1.26 `new(...)` forms changed the context lines |
+| `release-0.23`–`release-0.19` | Candidate applies cleanly; compile-checked on 0.23 and 0.22 only |
+| `release-0.18` | Also replace `OperationTimeoutToDuration()`, which Shipyard v0.18.5 lacks, with `OperationTimeout` seconds |
+
+On `release-0.18`–`0.22`, the shared unit runner prunes test directories whose files mention `e2e`, so `make unit` would skip
+`test/unit/framework`. In those PRs, run the package explicitly and attach the output, or keep the test only on branches whose
+runner selects it. Do not count a green `make unit` there as regression coverage.
+
+Shipyard #2618 (`devel` CI YAMLs) is still open; merge it separately. It does not affect `subctl verify`.
+Add a known-issue/release note for shipped versions: `subctl verify --only service-discovery` fails on OpenShift with those
+releases until users upgrade Subctl. Deployed Submariner components are unaffected.
+
+## 3. Pin and deliver a fresh Subctl executable
+
+On each branch, record the Lighthouse fix commit and publish an immutable tag or canonical Go pseudo-version. Update Subctl's direct
+Lighthouse requirement and required `go.sum` entries; review any transitive changes separately. The release must use the published
+dependency rather than a local replacement.
+
+Only the Subctl component needs rebuilding and re-releasing. Its image is not in the operator bundle's `relatedImages`,
+and the change is test-framework code, so bundle, FBC, and operand images are unaffected. 0.23.4 is staged but not in production.
+The release owner must decide whether to respin the 0.23.4 Subctl component from `release-0.23` or ship the fix as 0.23.5.
 
 In Subctl's corresponding release checkout:
 
@@ -77,14 +101,16 @@ Pinned delivery sources: [module requirements](https://github.com/submariner-io/
 [Dockerfile](https://github.com/submariner-io/subctl/blob/4b44caa4/package/Dockerfile.subctl.konflux).
 Recheck these against the landing revision.
 
-## 3. Qualify on the failing clusters
+## 4. Qualify on the failing clusters
 
-Follow the [QE procedure](QE-VALIDATION.md) for the original/fixed comparison. Establish the original controller failure first;
-UID 10000 rejection confirms this diagnosis, while a different failure requires revisiting it.
-Keep the actual QE image digest, cluster configuration, namespace labels, and service-account grants unchanged.
+Follow the [QE procedure](QE-VALIDATION.md). Its scratch-namespace reproduction establishes the original controller failure first,
+before the fix lands; UID 10000 rejection confirms this diagnosis, while a different failure requires revisiting it.
+Keep the actual QE image digest, cluster configuration, namespace labels, and service-account grants unchanged; remove QE step 2's
+temporary diagnostic grant before the acceptance run.
 
 Require controller-created Running helpers with the expected SCC/UID and all 14 original cases passed in both directions using
-the inspected delivered artifact. The QE procedure defines capture, image overrides, exit-status checks, and exact-case acceptance.
+the inspected delivered artifact. The QE procedure defines the reproduction, image overrides, exit-status checks, and
+exact-case acceptance.
 Use the [case matrix](evidence/RELEVANT-CASES-AUDIT.md#coverage-and-its-practical-limits) for the plain-Kubernetes/older-image
 controller regression and applicable three-cluster, IP-family, and feature CI. Restricted PSA and custom-policy behavior require
 separate qualification.
