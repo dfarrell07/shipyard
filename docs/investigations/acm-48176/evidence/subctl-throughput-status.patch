@@ -1,0 +1,14 @@
+diff --git a/internal/benchmark/throughput.go b/internal/benchmark/throughput.go
+--- a/internal/benchmark/throughput.go
++++ b/internal/benchmark/throughput.go
+@@ -159,9 +159,9 @@
+ 	framework.By(fmt.Sprintf("Waiting for the client pod %q to exit, returning what client sent", nettestClientPod.Pod.Name))
+ 
+ 	nettestClientPod.AwaitFinishVerbose(verbose)
++	nettestClientPod.CheckSuccessfulFinish()
+ 
+ 	if !verbose {
+-		nettestClientPod.CheckSuccessfulFinish()
+ 		fmt.Println(nettestClientPod.TerminationMessage)
+ 	}
+ 	// In Globalnet deployments, when backend pods finish their execution, kubeproxy-iptables driver tries

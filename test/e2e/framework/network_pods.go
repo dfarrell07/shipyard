@@ -444,9 +444,9 @@ func (np *NetworkPod) buildThroughputClientPod(ctx context.Context) {
 					Command: []string{
 						"sh", "-c", "for i in $(seq $CONN_TRIES);" +
 							" do if iperf3 -w 256K --connect-timeout $CONN_TIMEOUT -P 10 -p $TARGET_PORT -c $TARGET_IP;" +
-							" then break;" +
+							" then exit 0;" +
 							" else echo [going to retry]; sleep $RETRY_SLEEP;" +
-							" fi; done >/dev/termination-log 2>&1",
+							" fi; done >/dev/termination-log 2>&1; exit 1",
 					},
 					Env: []v1.EnvVar{
 						{Name: "TARGET_IP", Value: np.Config.RemoteIP},

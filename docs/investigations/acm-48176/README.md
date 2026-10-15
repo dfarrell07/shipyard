@@ -112,6 +112,16 @@ implementation](evidence/shipyard-release-0.23-iperf-scratch.patch) target the r
 regression test that inspects both pod types through their actual Kubernetes client API requests. The constructor signatures differ between
 devel and 0.23, so the test was adapted rather than copied unchanged.
 
+## Further findings from the second pass
+
+The [deep review](DEEP-REVIEW.md) explains the internal/external HostUsers conversion trap and why earlier validation missed these
+issues. It also records how the framework regression was initially excluded from `make unit`, and the build-target correction.
+
+The [benchmark follow-up](BENCHMARK-FOLLOWUP.md) documents a pre-existing retry loop that could return success after all iperf3
+attempts failed. This branch now corrects that exit status and tests the emitted shell command. Subctl also needs a separate change
+to check the pod's finish status in verbose mode; an unapplied candidate patch is retained with the notes. The scratch-only 0.23
+patch remains a separate artifact and does not yet include this additional retry fix or the build-target wiring.
+
 ## Runtime evidence
 
 [Reproduction script](evidence/runtime_checks.py), [results](evidence/runtime-results.json), and individual logs are in `evidence/`.

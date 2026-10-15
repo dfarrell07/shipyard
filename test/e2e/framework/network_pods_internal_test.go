@@ -23,8 +23,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -125,4 +131,75 @@ func newNetworkPodTestClient(t *testing.T) *kubernetes.Clientset {
 	}
 
 	return client
+}
+
+func TestThroughputClientRetryExitStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		tries            uint
+		successOn        int
+		expectedAttempts int
+		succeeds         bool
+	}{
+		{name: "all attempts fail", tries: 2, successOn: 3, expectedAttempts: 2},
+		{name: "first attempt succeeds", tries: 2, successOn: 1, expectedAttempts: 1, succeeds: true},
+		{name: "retry succeeds", tries: 2, successOn: 2, expectedAttempts: 2, succeeds: true},
+		{name: "no attempts", tries: 0, successOn: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			g := NewWithT(t)
+			previousClients, previousSecurityContext := KubeClients, podSecurityContext
+
+			t.Cleanup(func() {
+				KubeClients, podSecurityContext = previousClients, previousSecurityContext
+			})
+			KubeClients = []*kubernetes.Clientset{newNetworkPodTestClient(t)}
+
+			initPodSecurityContext()
+
+			f := &Framework{Namespace: "test-throughput"}
+			pod := f.NewNetworkPod(t.Context(), &NetworkPodConfig{
+				Type: ThroughputClientPod, Scheduling: NonGatewayNode, ConnectionAttempts: tc.tries,
+			}).Pod
+			container := pod.Spec.Containers[0]
+			scratch := t.TempDir()
+			attempts := filepath.Join(scratch, "attempts")
+			fakeIperf := "#!/bin/sh\necho run >> \"$ATTEMPT_FILE\"\n" +
+				"if [ \"$(wc -l < \"$ATTEMPT_FILE\")\" -ge \"$SUCCESS_ON_ATTEMPT\" ]; then exit 0; fi\nexit 7\n"
+			// #nosec G306 -- This private test fixture must be executable.
+			g.Expect(os.WriteFile(filepath.Join(scratch, "iperf3"), []byte(fakeIperf), 0o700)).To(Succeed())
+
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+
+			command := strings.ReplaceAll(container.Command[2], "/dev/termination-log", "termination.log")
+			// #nosec G204 -- Execute the command emitted by this test with private local fixtures.
+			cmd := exec.CommandContext(ctx, container.Command[0], container.Command[1], command)
+			cmd.Dir = scratch
+
+			cmd.Env = os.Environ()
+			for _, variable := range container.Env {
+				cmd.Env = append(cmd.Env, variable.Name+"="+variable.Value)
+			}
+
+			cmd.Env = append(cmd.Env, "PATH="+scratch+":"+os.Getenv("PATH"), "RETRY_SLEEP=0",
+				"ATTEMPT_FILE="+attempts, "SUCCESS_ON_ATTEMPT="+strconv.Itoa(tc.successOn))
+			output, err := cmd.CombinedOutput()
+			g.Expect(ctx.Err()).NotTo(HaveOccurred(), string(output))
+
+			if tc.succeeds {
+				g.Expect(err).NotTo(HaveOccurred(), string(output))
+			} else {
+				g.Expect(err).To(HaveOccurred(), "exhausted retries must fail")
+			}
+
+			recorded, readErr := os.ReadFile(attempts)
+			if !os.IsNotExist(readErr) {
+				g.Expect(readErr).NotTo(HaveOccurred())
+			}
+
+			g.Expect(strings.Fields(string(recorded))).To(HaveLen(tc.expectedAttempts))
+		})
+	}
 }
