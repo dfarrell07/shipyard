@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"net/http"
+	"net/http/httptest"
+	"time"
+)
+
+func main() {
+	for _, mode := range []string{"stale-security", "stale-unrelated", "apis404", "api404", "hang"} {
+		release := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if mode == "hang" && r.URL.Path == "/apis" {
+				<-release
+				return
+			}
+			if (mode == "api404" && r.URL.Path == "/api") || (mode == "apis404" && r.URL.Path == "/apis") {
+				http.NotFound(w, r)
+				return
+			}
+			if r.URL.Path == "/api" {
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprint(w, `{"kind":"APIVersions","apiVersion":"v1","versions":["v1"]}`)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList")
+			group := "security.openshift.io"
+			if mode == "stale-unrelated" {
+				group = "metrics.k8s.io"
+			}
+			fmt.Fprintf(w, `{"kind":"APIGroupDiscoveryList","apiVersion":"apidiscovery.k8s.io/v2","items":[{"metadata":{"name":%q},"versions":[{"version":"v1","freshness":"Stale"}]}]}`, group)
+		}))
+		client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL})
+		if err != nil {
+			panic(err)
+		}
+		actual := client.Discovery().RESTClient().(*rest.RESTClient).Client.Timeout
+		if mode == "hang" {
+			done := make(chan error, 1)
+			go func() { _, err := client.Discovery().ServerGroups(); done <- err }()
+			select {
+			case err := <-done:
+				fmt.Printf("%s timeout=%v returned early=%v\n", mode, actual, err)
+				close(release)
+			case <-time.After(33 * time.Second):
+				fmt.Printf("%s /api success then /apis blocked after 33s; shared HTTP timeout=%v\n", mode, actual)
+				close(release)
+				<-done
+			}
+		} else {
+			groups, err := client.Discovery().ServerGroups()
+			fmt.Printf("%s timeout=%v groups=%+v err=%v\n", mode, actual, groups, err)
+		}
+		server.Close()
+	}
+}

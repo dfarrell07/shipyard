@@ -9,7 +9,8 @@ Choose `RunAsUser` for the target cluster in the two Lighthouse Deployment build
 
 If API discovery advertises `security.openshift.io`, omit the fixed UID and let SCC admission choose an allowed UID.
 Otherwise retain UID 10000. Make this decision per cluster, including mixed cluster pairs; report discovery errors instead of
-treating them as plain Kubernetes. Keep `runAsNonRoot`, read-only roots, dropped capabilities, no privilege escalation,
+treating them as plain Kubernetes. Bound the authenticated `/apis` lookup with the configured operation timeout.
+Keep `runAsNonRoot`, read-only roots, dropped capabilities, no privilege escalation,
 RuntimeDefault seccomp, disabled token mounting, and resource settings.
 
 This corrects the earlier unconditional two-line proposal. The published nettest 0.23.2 image defaults to root, and a newer Subctl
@@ -22,6 +23,7 @@ and rebuild it: these builders are compiled into its discovery tests. Updating t
 
 The [implementation sequence](IMPLEMENTATION.md) specifies the helper, CI regression placement, dependency pin, fresh build,
 upstream/downstream delivery, and target-cluster acceptance checks.
+The [second expert audit](evidence/PLAN-AUDIT.md) records the timeout defect it found and the corrected candidate verification.
 
 Shipyard 0.23 already corrected its independent helper YAML; the Lighthouse Go builders were missed by that follow-up.
 This branch contains notes, evidence, and a candidate patch only. The separate devel YAML change is tracked in

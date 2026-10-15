@@ -2,47 +2,72 @@
   "lighthouse_version": "v0.23.4",
   "lighthouse_commit": "39802358763f6edf93850d1b863fec74aca64d08",
   "lighthouse_module_sum": "h1:emztnGWwi7uwWb7LakoxE/nyHFyxnA7b+m+v708fuPk=",
+  "client_go_version": "v0.35.8",
+  "go_version": "go version go1.26.8-X:nodwarf5 linux/amd64",
   "candidate_source_sha256": {
-    "test/e2e/framework/deployments.go": "de6ea6cbdfe8f94555203517529e6bdcb64613debcfcd27de8e229eafda6e6e5",
-    "test/unit/framework/deployments_uid_test.go": "5969193f0ca74ac2e95bce9fdfcac3a748e8ce2eab9569c664901670deb49dd1"
+    "test/e2e/framework/deployments.go": "e2e83bccd75aa722da7814248c5451d44be5aed6cfdce736c591b242fbb1e7aa",
+    "test/unit/framework/deployments_uid_test.go": "90d4356974c793f5df8d27c3e685b911576d25865661e96ebbe7debebbb10108"
   },
-  "exporter_sha256": "68733015e1a69c247e836aa97070df7dfd5b39d0283b36c77764905ac9222de7",
-  "behavior": "Per target cluster: security.openshift.io advertised in API discovery delegates UID to SCC admission; otherwise explicitly use UID 10000. Discovery errors fail before Deployment creation.",
-  "runtime_qualification": "This preserves plain Kubernetes UID behavior for older root-default images. OpenShift success requires ordinary valid namespace allocation and restricted-v2 access; arbitrary custom SCC policies are not covered.",
-  "template_comparisons": [
-    {
-      "platform": "openshift",
-      "builder": "nginx-demo",
-      "byte_equal_reference": "scc-proof-fixed/nginx-demo.json",
-      "sha256": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b"
-    },
-    {
-      "platform": "openshift",
-      "builder": "netshoot",
-      "byte_equal_reference": "scc-proof-fixed/netshoot.json",
-      "sha256": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0"
-    },
-    {
-      "platform": "kubernetes",
-      "builder": "nginx-demo",
-      "byte_equal_reference": "scc-proof-inputs/nginx-demo.json",
-      "sha256": "da1367f688fa76a3310ff48f0b478028f55ce749a9515c7a8b9837d4dbc91133"
-    },
-    {
-      "platform": "kubernetes",
-      "builder": "netshoot",
-      "byte_equal_reference": "scc-proof-inputs/netshoot.json",
-      "sha256": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2"
-    }
+  "patch_sha256": "eaa3171cbf54d20be1424eacc182d017e03a23cd87c56b1456ff552e557975a2",
+  "behavior": "Per target cluster, authenticated legacy JSON GET /apis with explicit context deadline from framework operation timeout; omit RunAsUser only when security.openshift.io is advertised, otherwise retain UID 10000. All discovery errors fail before Deployment POST. Zero operation timeout is an immediate deadline, never unbounded.",
+  "discovery_timeout_finding": "discovery-timeout-finding.json records the prior ServerGroups shared HTTP client timeout defect and focused 33-second reproduction.",
+  "production_change": "Only the two runAsUser expressions and new private helper/import; all other template fields match original or admission-checked references byte for byte.",
+  "test_behavior": [
+    "Both actual builders produce the right UID/hardening per target cluster, including alternate/repeated order",
+    "Fixture permits only legacy JSON /apis discovery; no /api dependency",
+    "Both builders reject HTTP403/503 with zero Deployment POSTs",
+    "Both builders cancel a stalled authenticated /apis request at one-second configured operation timeout; server observes request cancellation, zero Deployment POSTs",
+    "Both builders fail immediately for zero operation timeout, zero Deployment POSTs",
+    "Tests install a fresh gomega.Default and restore original object, clients and TestContext on cleanup; global mutations are serial"
   ],
-  "unit_command": "GOTMPDIR=/path/with/space GOGC=20 go test -mod=readonly -race -p 1 -v ./test/unit/framework -run '^TestNettest' --ginkgo.v --ginkgo.trace --ginkgo.junit-report /path/to/junit.xml",
-  "lint_command": "golangci-lint run ./test/e2e/framework ./test/unit/framework",
-  "fmt_command": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go",
+  "test_fixture_limit": "Running Pod responses bypass controller execution; stalled handler has a five-second fallback so an accidentally unbounded candidate fails the test rather than hanging the suite.",
+  "commands": {
+    "race": "go test -race -count=1 -v ./test/unit/framework",
+    "lint": "golangci-lint run ./test/e2e/framework ./test/unit/framework",
+    "format": "golangci-lint fmt --diff test/e2e/framework/deployments.go test/unit/framework/deployments_uid_test.go",
+    "export_openshift": "go run -mod=readonly ../export-uid-candidate.go ../bounded-candidate-openshift openshift",
+    "export_kubernetes": "go run -mod=readonly ../export-uid-candidate.go ../bounded-candidate-kubernetes kubernetes",
+    "patch_check": "git apply --check ../bounded-lighthouse-scc.patch from exact downloaded Lighthouse v0.23.4 module directory"
+  },
   "verification": {
-    "race_unit_exit_code": 0,
-    "race_log_sha256": "991f50496c29c0e1fdba8173f66fb0bb7722e8fe92389e88c24cb78ab42f3812",
+    "race_exit_code": 0,
+    "race_log_sha256": "ec597adc529d14610eb76f482a49eebecae046961eebb4af00913926fd3c7cc8",
+    "lint_exit_code": 0,
     "lint_issues": 0,
+    "lint_log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47",
+    "format_exit_code": 0,
     "format_diff_empty": true,
-    "patch_applies_to_exact_v0.23.4": true
-  }
+    "patch_applies_to_exact_v0.23.4": true,
+    "template_comparisons": [
+      {
+        "platform": "openshift",
+        "builder": "nginx-demo",
+        "reference": "scc-proof-fixed/nginx-demo.json",
+        "byte_equal": true,
+        "sha256": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b"
+      },
+      {
+        "platform": "openshift",
+        "builder": "netshoot",
+        "reference": "scc-proof-fixed/netshoot.json",
+        "byte_equal": true,
+        "sha256": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0"
+      },
+      {
+        "platform": "kubernetes",
+        "builder": "nginx-demo",
+        "reference": "scc-proof-inputs/nginx-demo.json",
+        "byte_equal": true,
+        "sha256": "da1367f688fa76a3310ff48f0b478028f55ce749a9515c7a8b9837d4dbc91133"
+      },
+      {
+        "platform": "kubernetes",
+        "builder": "netshoot",
+        "reference": "scc-proof-inputs/netshoot.json",
+        "byte_equal": true,
+        "sha256": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2"
+      }
+    ]
+  },
+  "limits": "Not a live QE or Kubernetes controller qualification. OpenShift needs ordinary valid namespace allocation and restricted-v2 access. Full make unit remains required when landing the Lighthouse change."
 }

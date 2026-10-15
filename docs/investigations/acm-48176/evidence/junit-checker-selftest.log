@@ -1,0 +1,25 @@
+ACM-48176 JUnit acceptance checker self-check
+Input: authenticated e2e.zip Azure/GCP JUnit, sha256 331ac2991087fffdf9994a5eb598d0cf580ea4d1b9af1f20e99b036a8012ce59
+Expected names: published attachment-analysis.json, all 14 independently matched to attached XML failures
+PASS actual_archived_14_failures expected_accept=false accepted=false exit=1
+PASS all_required_pass_with_original_unrelated_skips expected_accept=true accepted=true exit=0
+PASS missing_case expected_accept=false accepted=false exit=1
+PASS duplicate_passing_case expected_accept=false accepted=false exit=1
+PASS renamed_case_substitution expected_accept=false accepted=false exit=1
+PASS skipped_element_despite_passed_status expected_accept=false accepted=false exit=1
+PASS failure_element_despite_passed_status expected_accept=false accepted=false exit=1
+PASS error_element_despite_passed_status expected_accept=false accepted=false exit=1
+PASS failed_status_without_child expected_accept=false accepted=false exit=1
+PASS missing_status expected_accept=false accepted=false exit=1
+PASS suite_infrastructure_error expected_accept=false accepted=false exit=1
+PASS additional_new_failure expected_accept=false accepted=false exit=1
+PASS additional_failed_status_without_child expected_accept=false accepted=false exit=1
+PASS root_infrastructure_error expected_accept=false accepted=false exit=1
+PASS recovered_flaky_failure expected_accept=false accepted=false exit=1
+PASS suite_flake_retries_enabled expected_accept=false accepted=false exit=1
+PASS second_direction_still_fails expected_accept=false accepted=false exit=1
+PASS same_report_given_twice expected_accept=false accepted=false exit=1
+PASS missing_report_file expected_accept=false accepted=false exit=1
+PASS malformed_xml expected_accept=false accepted=false exit=1
+PASS incomplete_expected_name_list expected_accept=false accepted=false exit=1
+21 checks; all passed=true

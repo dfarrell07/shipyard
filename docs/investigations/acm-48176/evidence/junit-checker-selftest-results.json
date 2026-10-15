@@ -1,0 +1,152 @@
+{
+  "checks": [
+    {
+      "accepted": false,
+      "case": "actual_archived_14_failures",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": true,
+      "case": "all_required_pass_with_original_unrelated_skips",
+      "exit_code": 0,
+      "expected_accept": true,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_case",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "duplicate_passing_case",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "renamed_case_substitution",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "skipped_element_despite_passed_status",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "failure_element_despite_passed_status",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "error_element_despite_passed_status",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "failed_status_without_child",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_status",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "suite_infrastructure_error",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "additional_new_failure",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "additional_failed_status_without_child",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "root_infrastructure_error",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "recovered_flaky_failure",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "suite_flake_retries_enabled",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "second_direction_still_fails",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "same_report_given_twice",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "missing_report_file",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "malformed_xml",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    },
+    {
+      "accepted": false,
+      "case": "incomplete_expected_name_list",
+      "exit_code": 1,
+      "expected_accept": false,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

@@ -1,8 +1,10 @@
 # Adversarial review of the nettest correction
 
-Three independent reviewers examined admission, container runtime behavior, and the QE evidence/release integration.
+The first three independent reviewers examined admission, container runtime behavior, and the QE evidence/release integration.
 The audit changed the proposal: remove the fixed UID only on OpenShift, retaining UID 10000 on plain Kubernetes.
 The earlier unconditional two-line deletion is insufficient for a compatible general release.
+A [second adversarial review](PLAN-AUDIT.md) corrected an unbounded discovery request and strengthened delivery/QE acceptance.
+The candidate and verification rows below now refer to that bounded implementation.
 
 ## Concrete compatibility defect found
 
@@ -34,9 +36,9 @@ Sources: [Subctl version check](https://github.com/submariner-io/subctl/blob/4b4
 | Legacy 0.23.2 runtime | Four cases passed: both helper commands at UID 10000 and UID 1001530000 | [Results](legacy-runtime-results.json), [output](legacy-runtime.log), [reproducer](legacy_runtime_audit.py) |
 | Final candidate's emitted templates | OpenShift outputs exactly match validated no-UID templates; Kubernetes outputs exactly match original explicit-UID templates | [Byte comparisons and hashes](candidate-template-comparison.json) |
 | Default unit-runner test discovery | Actual shared runner selects `test/unit/framework`; it prunes `test/e2e` | [Enumeration log](unit-discovery.log), [recorded Go arguments](unit-discovery-invocations.jsonl) |
-| Real builder regression with race detection | Mixed cluster order and repeated calls select the correct UID; HTTP 403/503 errors stop both builders before Deployment creation; no races reported | [Final race-enabled test log](candidate-race.log), [command and exact source hashes](candidate-provenance.json) |
+| Real builder regression with race detection | Mixed/repeated cluster calls select the correct UID; HTTP errors, stalled requests, and zero budget stop both builders; no races reported | [Final race-enabled test log](candidate-race.log), [command and exact source hashes](candidate-provenance.json) |
 | Candidate static checks | Full lint passes with zero issues on both changed packages; format check passes | [Lint output](candidate-lint.log), [commands and source hashes](candidate-provenance.json) |
-| Subctl dependency integration | Full executable builds with the final candidate, version/help smoke passes, and both platform exports match the expected templates | [Source/binary hashes, module graph, linked symbols, and limits](subctl-build-provenance.json) |
+| Subctl dependency integration | Fresh executable builds with the bounded candidate; version/help and both-platform exports pass | [Current source/binary hashes and limits](subctl-bounded-build-provenance.json), [selected graph](subctl-bounded-selected-modules.txt) |
 
 The runtime checks verify zero effective capabilities, no-new-privileges, an active seccomp filter, read-only `/tmp` and `/app`,
 UDP/TCP DNS answers, and 64 successful HTTP responses across the eight server cases. CPU/memory flags were configured;
@@ -44,7 +46,9 @@ cgroup values were not independently recorded. No writable scratch volume or rel
 These are rootless Podman/crun checks; their UID mappings do not qualify Kubernetes `hostUsers: false` or CRI-O behavior.
 The current-image results record an irrelevant external DNS timeout in the initial runner and the final case's successful cleaned rerun.
 The unit-discovery check uses a recording Go shim to verify package enumeration only; it does not execute the tests.
-The Subctl build uses a local module replacement, not a published dependency update. Its VCS stamp is disabled because the installed
+The current Subctl build uses a local module replacement, not a published dependency update.
+The [older Subctl build record](subctl-build-provenance.json) describes the superseded, unbounded candidate only.
+Its VCS stamp is disabled because the installed
 Go toolchain skipped the worktree's `.git` file and selected the enclosing repository. The provenance records the independently
 checked source revision and candidate hash instead of attributing that misleading stamp to Subctl. The binary is retained locally.
 

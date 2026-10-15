@@ -45,7 +45,7 @@ diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.
  						SeccompProfile: &corev1.SeccompProfile{
  							Type: corev1.SeccompProfileTypeRuntimeDefault,
  						},
-@@ -170,3 +175,19 @@
+@@ -170,3 +175,24 @@
  
  	return f.AwaitPodsByAppLabel(cluster, appName, deployment.Namespace, 1)
  }
@@ -54,7 +54,12 @@ diff --git a/test/e2e/framework/deployments.go b/test/e2e/framework/deployments.
 +// Other clusters retain an explicit non-root UID for older nettest images whose
 +// image configuration still defaults to root.
 +func nettestRunAsUser(cluster framework.ClusterIndex) *int64 {
-+	groups, err := framework.KubeClients[cluster].Discovery().ServerGroups()
++	ctx, cancel := context.WithTimeout(context.Background(), framework.TestContext.OperationTimeoutToDuration())
++	defer cancel()
++
++	groups := &metav1.APIGroupList{}
++	err := framework.KubeClients[cluster].Discovery().RESTClient().Get().AbsPath("/apis").
++		SetHeader("Accept", "application/json").Do(ctx).Into(groups)
 +	Expect(err).NotTo(HaveOccurred(), "discover API groups for nettest UID selection")
 +
 +	for i := range groups.Groups {
@@ -69,7 +74,7 @@ diff --git a/test/unit/framework/deployments_uid_test.go b/test/unit/framework/d
 new file mode 100644
 --- /dev/null
 +++ b/test/unit/framework/deployments_uid_test.go
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,332 @@
 +/*
 +SPDX-License-Identifier: Apache-2.0
 +
@@ -98,6 +103,7 @@ new file mode 100644
 +	"strings"
 +	"sync"
 +	"testing"
++	"time"
 +
 +	"github.com/onsi/gomega"
 +	lh "github.com/submariner-io/lighthouse/test/e2e/framework"
@@ -137,12 +143,11 @@ new file mode 100644
 +		w.Header().Set("Content-Type", "application/json")
 +
 +		switch {
-+		case r.URL.Path == "/api":
-+			_ = json.NewEncoder(w).Encode(metav1.APIVersions{
-+				TypeMeta: metav1.TypeMeta{Kind: "APIVersions", APIVersion: "v1"},
-+				Versions: []string{"v1"},
-+			})
 +		case r.URL.Path == "/apis":
++			if r.Header.Get("Accept") != "application/json" {
++				t.Errorf("discovery Accept header: %q", r.Header.Get("Accept"))
++			}
++
 +			if discoveryStatus != http.StatusOK {
 +				w.WriteHeader(int(discoveryStatus))
 +				_ = json.NewEncoder(w).Encode(metav1.Status{
@@ -198,9 +203,7 @@ new file mode 100644
 +}
 +
 +func TestNettestDeploymentUIDPerCluster(t *testing.T) {
-+	oldClients, oldContext := sy.KubeClients, sy.TestContext
-+	t.Cleanup(func() { sy.KubeClients, sy.TestContext = oldClients, oldContext })
-+	gomega.RegisterFailHandler(func(message string, _ ...int) { panic(message) })
++	preserveUIDTestGlobals(t)
 +	var kubernetesCapture, openshiftCapture uidPodCapture
 +	sy.KubeClients = []*kubernetes.Clientset{
 +		uidTestClient(t, false, http.StatusOK, &kubernetesCapture),
@@ -251,9 +254,7 @@ new file mode 100644
 +}
 +
 +func TestNettestBuildersRejectDiscoveryFailure(t *testing.T) {
-+	oldClients := sy.KubeClients
-+	t.Cleanup(func() { sy.KubeClients = oldClients })
-+	gomega.RegisterFailHandler(func(message string, _ ...int) { panic(message) })
++	preserveUIDTestGlobals(t)
 +
 +	for _, status := range []int32{http.StatusForbidden, http.StatusServiceUnavailable} {
 +		for _, builder := range []string{"nginx", "netshoot"} {
@@ -285,5 +286,124 @@ new file mode 100644
 +				}
 +			})
 +		}
++	}
++}
++
++// These tests mutate process globals and intentionally do not run in parallel.
++func preserveUIDTestGlobals(t *testing.T) {
++	t.Helper()
++
++	oldClients, oldContext, oldGomega := sy.KubeClients, sy.TestContext, gomega.Default
++	t.Cleanup(func() {
++		sy.KubeClients, sy.TestContext, gomega.Default = oldClients, oldContext, oldGomega
++	})
++
++	gomega.Default = gomega.NewGomega(func(message string, _ ...int) { panic(message) })
++}
++
++func uidStalledDiscoveryClient(t *testing.T, captured *uidPodCapture) (*kubernetes.Clientset, <-chan struct{}) {
++	t.Helper()
++
++	cancelled := make(chan struct{})
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/deployments") {
++			captured.add(&corev1.PodSpec{})
++			t.Error("Deployment submitted before discovery completed")
++			w.WriteHeader(http.StatusInternalServerError)
++
++			return
++		}
++
++		if r.URL.Path != "/apis" || r.Header.Get("Accept") != "application/json" {
++			t.Errorf("unexpected request: %s %s Accept=%q", r.Method, r.URL.Path, r.Header.Get("Accept"))
++		}
++
++		if r.Header.Get("Authorization") != "Bearer uid-test-token" {
++			t.Errorf("request did not reuse authenticated client: %q", r.Header.Get("Authorization"))
++		}
++
++		select {
++		case <-r.Context().Done():
++			close(cancelled)
++		case <-time.After(5 * time.Second):
++			w.WriteHeader(http.StatusGatewayTimeout)
++		}
++	}))
++	t.Cleanup(server.Close)
++
++	client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL, BearerToken: "uid-test-token"})
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	return client, cancelled
++}
++
++func TestNettestBuildersBoundDiscovery(t *testing.T) {
++	for _, builder := range []string{"nginx", "netshoot"} {
++		t.Run(builder, func(t *testing.T) {
++			preserveUIDTestGlobals(t)
++			var captured uidPodCapture
++			client, cancelled := uidStalledDiscoveryClient(t, &captured)
++			sy.KubeClients = []*kubernetes.Clientset{client}
++			sy.TestContext.OperationTimeout = 1
++			f := &lh.Framework{Framework: sy.NewBareFramework("uid-proof")}
++			started := time.Now()
++			assertUIDBuilderFailure(t, f, builder, "context deadline exceeded")
++
++			if time.Since(started) > 5*time.Second {
++				t.Error("discovery exceeded its configured operation timeout")
++			}
++
++			select {
++			case <-cancelled:
++			case <-time.After(time.Second):
++				t.Error("server did not observe discovery request cancellation")
++			}
++
++			if len(captured.snapshot()) != 0 {
++				t.Error("Deployment created despite discovery timeout")
++			}
++		})
++	}
++}
++
++func TestNettestBuildersRejectZeroDiscoveryBudget(t *testing.T) {
++	for _, builder := range []string{"nginx", "netshoot"} {
++		t.Run(builder, func(t *testing.T) {
++			preserveUIDTestGlobals(t)
++			var captured uidPodCapture
++			sy.KubeClients = []*kubernetes.Clientset{uidTestClient(t, false, http.StatusOK, &captured)}
++			sy.TestContext.OperationTimeout = 0
++			f := &lh.Framework{Framework: sy.NewBareFramework("uid-proof")}
++			assertUIDBuilderFailure(t, f, builder, "context deadline exceeded")
++
++			if len(captured.snapshot()) != 0 {
++				t.Error("Deployment created despite an expired discovery budget")
++			}
++		})
++	}
++}
++
++func assertUIDBuilderFailure(t *testing.T, f *lh.Framework, builder, expected string) {
++	t.Helper()
++
++	defer func() {
++		failure := recover()
++		if failure == nil {
++			t.Error("builder ignored discovery failure")
++			return
++		}
++
++		g := gomega.NewWithT(t)
++		g.Expect(failure).To(gomega.BeAssignableToTypeOf(""))
++		g.Expect(failure).To(gomega.ContainSubstring("discover API groups for nettest UID selection"))
++		g.Expect(failure).To(gomega.ContainSubstring(expected))
++	}()
++
++	if builder == "nginx" {
++		f.NewNginxDeployment(sy.ClusterA)
++	} else {
++		f.NewNetShootDeploymentInNS(sy.ClusterA, "uid-proof")
 +	}
 +}

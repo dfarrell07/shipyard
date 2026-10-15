@@ -15,17 +15,23 @@ has been changed by this notes branch.
 Call the helper at the start of `NewNginxDeployment` and `NewNetShootDeploymentInNS`, before submitting any Deployment.
 `NewNetShootDeployment` already delegates to the latter, so it needs no independent policy implementation.
 
-The helper calls `framework.KubeClients[cluster].Discovery().ServerGroups()` with the passed target cluster index.
+The helper creates a context with `framework.TestContext.OperationTimeoutToDuration()` and defers its cancellation.
+Use the passed target cluster's authenticated `Discovery().RESTClient()` to GET `/apis`, set `Accept: application/json`,
+and decode into `metav1.APIGroupList` with `Do(ctx).Into(groups)`.
 Assert success using the framework's existing Gomega failure convention and the message
 `discover API groups for nettest UID selection`. A failure must stop the builder before its Deployment POST.
 Scan the returned groups by name: `security.openshift.io` means return `nil`; otherwise return `ptr.To(int64(10000))`.
 Assign that pointer to the existing pod-level `SecurityContext.RunAsUser` field. A nil pointer omits the field in the request.
 
-This uses the existing authenticated client and its timeout; it does not need SCC-list or authorization-review permissions.
-In the inspected client-go v0.35.8 implementation, discovery reads `/api` and `/apis` and defaults to 32 seconds **per request**
-when no timeout was configured. An HTTP/decode/transport error returned by discovery must not be interpreted as absence of OpenShift.
-Use group discovery rather than fetching every group's resources: an unrelated aggregated API's resource failure should not
-become an assertion that the OpenShift group is absent.
+This reuses authentication without requiring SCC-list or authorization-review permissions. The explicit context bounds the
+request, rate-limit waits, and retries by the existing operation budget; a zero budget fails immediately rather than disabling
+the bound. Force legacy JSON so the reply is an APIGroupList even when the server supports aggregated discovery.
+HTTP/decode/transport errors must fail explicitly rather than select UID 10000.
+
+Do not use the earlier unbounded `ServerGroups()` candidate. Its assumed 32-second timeout does not hold for the framework's
+actual clientset construction: the supplied shared HTTP client can have timeout zero. The second audit reproduced a stalled
+`/apis` request still blocked after 33 seconds. Do not mutate that shared client or abandon a timed-out goroutine.
+The [second audit](evidence/PLAN-AUDIT.md) records the finding and the replacement's deadline tests.
 
 Do not cache a result globally or infer the remote platform from cluster A, the local machine, or the nettest image.
 The small per-builder discovery lookup keeps mixed cluster pairs correct without cache invalidation or shared mutable state.
@@ -48,7 +54,10 @@ The committed regression should retain these checks:
 - Both builders omit UID on OpenShift and retain UID 10000 on plain Kubernetes, with all other hardening preserved.
 - Alternating and repeated target indices select the target's policy, catching an accidental global cache or cluster-A lookup.
 - HTTP 403 and 503 produce the expected discovery failure and zero Deployment POSTs for both builders.
-- HTTP capture is synchronized; tests restore modified global clients/context and do not run those mutations in parallel.
+- A stalled `/apis` request is canceled within the configured budget for both builders, with zero Deployment POSTs; zero budget
+  also fails immediately. Assert the requested path and legacy JSON Accept header.
+- HTTP capture is synchronized; tests restore clients, TestContext, and `gomega.Default` and do not mutate them in parallel.
+  Install a fresh Gomega instance for the panic handler instead of modifying the saved instance's handler.
 
 The fixture must request JSON explicitly and return typed Kubernetes Status errors; the real client can otherwise send protobuf
 or decode an untyped fixture error differently. Verify the expected failure text/status, not just that some panic occurred.
@@ -68,13 +77,15 @@ do not assume a future version number or ship a local `replace` directive.
 In Subctl's corresponding release checkout, update the direct Lighthouse requirement in `go.mod` and the required `go.sum` entries.
 Review the module diff and selected versions: do not bulk-upgrade all Submariner modules to obtain this builder fix.
 If the chosen Lighthouse revision requires transitive changes, review those changes explicitly before accepting that revision.
-Confirm `GOWORK=off go list -m -json github.com/submariner-io/lighthouse` selects the intended immutable version without a local
-replacement. Run the Subctl unit/build checks and repeat the builder exports under **Subctl's** resolved module graph.
+Set `GOWORK=off` for the entire precheck, test, and build sequence, not just one inspection command. Confirm
+`go list -m -json github.com/submariner-io/lighthouse` selects the intended immutable version without an unexpected replacement.
+Record relevant Go environment settings and run the Subctl unit/build checks; repeat builder exports under **Subctl's** graph.
 
 Build in a fresh isolated checkout, or remove the relevant existing Subctl build outputs first. At inspected Subctl commit
 `4b44caa4`, the binary Makefile rule lists `.go` files as prerequisites but not `go.mod`/`go.sum`. Merely changing the dependency
-and invoking `make build` in a previously built tree can reuse an old executable. This is a delivery precaution, not a request
-to change unrelated build infrastructure in this fix.
+and invoking `make build` in a previously built tree can reuse an old executable. For a reused release tree, remove the relevant
+binaries, archives, and `dist/subctl-checksums.txt`: `make clean` leaves that checksum file, while its generation recipe appends.
+A fresh checkout avoids both traps without changing unrelated build infrastructure.
 
 The earlier local-replacement experiment proves compilation and dependency integration; it is not the release artifact.
 Use the project's normal build/version flags for delivery, then record the source commit, resolved Lighthouse version, binary
@@ -88,9 +99,15 @@ mutable `subctl-release-0.23` prerelease on branch pushes; identify the exact so
 For downstream QE, run the corresponding Subctl Konflux build from the dependency-update commit and use its immutable image
 digest. The existing pipeline prefetches the root Go module hermetically; the corrected dependency must be available to that
 prefetch. `package/Dockerfile.subctl.konflux` compiles `./cmd` and installs `/usr/local/bin/subctl`.
+Require successful prefetch and build results from that exact PipelineRun revision. The downstream build uses the Red Hat
+toolset, `CGO_ENABLED=1`, and `strictfipsruntime`; the local compile does not qualify that build. Record the output image index,
+tested child image digest/architecture, and embedded executable checksum/module metadata before running QE.
 
 Confirm QE uses that binary/container, rather than an older client already on PATH. Record the actual executable path and
-checksum, or the Subctl container digest and embedded binary/module identity. Updating Lighthouse agent/CoreDNS images,
+checksum, or the Subctl container digest and embedded binary/module identity. Inspect `go version -m` on that downloaded or
+extracted executable itself: require the intended Lighthouse module and reject unexpected replacements. Any hermetic tooling
+rewrite needs a recorded source/checksum mapping, not an assumption that a prebuild graph describes the final binary.
+Updating Lighthouse agent/CoreDNS images,
 nettest images, or Shipyard YAML alone does not update these compiled builders. No image security-setting change is required.
 
 Sources for this delivery sequence are pinned to the inspected Subctl baseline:
@@ -104,6 +121,9 @@ Recheck these files against the chosen landing revision before executing the rel
 ## 5. Qualify the delivered fix on the failing clusters
 
 Start capture of namespace allocations, Deployment/ReplicaSet state, pod metadata, and events **before** the tests run.
+Require successful LISTs and established WATCH responses on both contexts before starting tests; merely starting background
+processes does not prove capture works. Preserve stderr, process status, resource versions, and owner UIDs. A collector error
+or unexplained gap leaves the evidence incomplete. See the concrete [capture/run procedure](QE-VALIDATION.md).
 Shipyard v0.23.4 deletes test namespaces immediately afterward; Subctl has no implemented preservation flag.
 First establish why the original controller-created helper pods fail. FailedCreate events showing UID 10000 outside the
 namespace range confirm the proposed cause; a different admission/controller failure requires revisiting that attribution.
@@ -115,6 +135,9 @@ Record `RELATED_IMAGE_submariner-nettest` if set: it takes precedence over Subct
 Require both helper Deployments to produce Running pods through the real controllers, with the selected SCC and admitted
 UID recorded. Then run all 14 previously failing discovery cases with the delivered executable in both cluster directions;
 they must execute and pass, not disappear behind skips. Retain events and pod specs during execution, including any new failure.
+Use two invocations with swapped `--context`/`--tocontext` and distinct JUnit reports. Require both command exit codes to be zero
+and run the [case-identity checker](evidence/check_discovery_junit.py) against both reports. It checks each original case exactly
+once, rejects skips/failures/errors/retries and new reported failures, and prevents a passing count from substituting other cases.
 The plain-Kubernetes/older-image regression remains covered by the candidate and legacy-image tests; a target rerun should
 also confirm that branch when a plain Kubernetes test cluster is available.
 
