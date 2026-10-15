@@ -56,21 +56,7 @@
     "requester": "system:serviceaccount:kube-system:replicaset-controller",
     "namespace_uid_range_fixture": "1001530000/10000"
   },
-  "backport_checks": {
-    "candidate_patch_applies_cleanly": [
-      "release-0.18",
-      "release-0.19",
-      "release-0.20",
-      "release-0.21",
-      "release-0.22",
-      "release-0.23"
-    ],
-    "candidate_patch_needs_adaptation": [
-      "devel",
-      "release-0.25",
-      "release-0.24"
-    ],
-    "release-0.18_go_vet": "fails: shipyard v0.18.5 TestContextType has no OperationTimeoutToDuration",
-    "release-0.22_go_vet": "passes for test/e2e/framework and test/unit/framework"
+  "branch_commits": {
+    "note": "One commit per Lighthouse branch; see lighthouse-branches/*.patch and branch-verification.log"
   }
 }

@@ -7,7 +7,7 @@ Set:
 
 - `CTX_A` and `CTX_B` to the two cluster contexts;
 - `NETTEST_DIGEST_REF` to the `registry/repository@sha256:...` nettest image QE uses;
-- `OUT` to a fresh directory.
+- `OUT` to a fresh directory for each Subctl run.
 
 Use the same image, clusters, and grants throughout, apart from step 2's temporary grant.
 
@@ -15,15 +15,25 @@ Use the same image, clusters, and grants throughout, apart from step 2's tempora
 
 [`evidence/repro/original`](evidence/repro/original) holds the exact Deployments that the Lighthouse v0.23.4 builders create.
 [`evidence/repro/corrected`](evidence/repro/corrected) holds the same Deployments without the pod `runAsUser`, which is what
-the fix produces on OpenShift. The namespaces get the same labels the e2e framework uses. On each context:
+the fix produces on OpenShift. The namespaces get the e2e framework's labels at creation, before OpenShift's label syncer can
+claim them. On each context:
 
 ```bash
 ctx=$CTX_A   # then CTX_B
 for variant in original corrected; do
   ns=acm-48176-$variant
-  oc --context "$ctx" create namespace "$ns"
-  oc --context "$ctx" label namespace "$ns" \
-    pod-security.kubernetes.io/enforce=privileged security.openshift.io/scc.podSecurityLabelSync=false
+  oc --context "$ctx" create -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $ns
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    security.openshift.io/scc.podSecurityLabelSync: "false"
+EOF
+  until oc --context "$ctx" get namespace "$ns" -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.uid-range}' | grep -q .; do
+    sleep 1
+  done
   for helper in nginx-demo netshoot; do
     sed "s|NETTEST_IMAGE|$NETTEST_DIGEST_REF|" "evidence/repro/$variant/$helper.json" | oc --context "$ctx" -n "$ns" create -f -
   done
@@ -44,8 +54,8 @@ oc --context "$ctx" delete namespace acm-48176-original acm-48176-corrected
 ```
 
 The diagnosis is confirmed when each original ReplicaSet reports
-`provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges`. On 4.20 the message also
-includes a restricted-v3 `hostUsers` rejection. Any other cause, such as quota, a different SCC field, or a webhook, means the
+`provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges`. On 4.20 the message may also
+include a restricted-v3 `hostUsers` rejection. Any other cause, such as quota, a different SCC field, or a webhook, means the
 diagnosis is wrong; stop here. Save the output.
 
 ## 2. Optional: confirm with the unchanged Subctl
@@ -57,15 +67,21 @@ and still enforces the rest of the hardening:
 for ctx in "$CTX_A" "$CTX_B"; do oc --context "$ctx" adm policy add-scc-to-group nonroot-v2 system:serviceaccounts; done
 ```
 
-Run step 3 with the original 0.23.4 Subctl; all 14 cases should get past helper setup. Then remove the grant with
-`oc --context "$ctx" adm policy remove-scc-from-group nonroot-v2 system:serviceaccounts` on both contexts. It is a diagnostic,
-not a workaround to recommend.
+Run step 3 with the original 0.23.4 Subctl and its own `OUT`. Step 4's checker should pass. The helper check should not,
+because the pods run under nonroot-v2 rather than restricted-v2. Then remove the grant, which is a diagnostic, not a workaround:
+
+```bash
+for ctx in "$CTX_A" "$CTX_B"; do oc --context "$ctx" adm policy remove-scc-from-group nonroot-v2 system:serviceaccounts; done
+```
 
 ## 3. Run discovery with the fixed Subctl
 
-Set `SUBCTL` to the executable under test and record its checksum and `go version -m` output (see the [plan](PLAN.md#delivering-subctl)).
-The commands unset `RELATED_IMAGE_submariner-nettest`, which would override the image flag, and sample the helper pods for the
-whole run, because the suite deletes its namespaces.
+Confirm step 2's grant is gone. Take `SUBCTL` from the rebuilt `subctl-rhel9` stage image named in ACM-48176, by digest, for example
+`oc image extract registry.stage.redhat.io/rhacm2/subctl-rhel9@sha256:<digest> --path /usr/local/bin/subctl:. --filter-by-os linux/amd64`.
+Record `sha256sum "$SUBCTL"` and `go version -m "$SUBCTL"`; it must show the fixed Lighthouse version and no `=>` replacement.
+
+The commands unset `RELATED_IMAGE_submariner-nettest`, which would override the image flag. They also sample the helper pods for
+the whole run, because the suite deletes its namespaces.
 
 ```bash
 sample_helpers() {
@@ -82,7 +98,7 @@ run_discovery() { # from-context to-context name
   echo $? > "$OUT/$3.exit"
 }
 
-sample_helpers > "$OUT/helper-pods.log" 2>&1 &
+sample_helpers > "$OUT/helper-pods.log" 2> "$OUT/helper-pods.err" &
 sampler=$!
 run_discovery "$CTX_A" "$CTX_B" a-to-b
 run_discovery "$CTX_B" "$CTX_A" b-to-a
@@ -92,14 +108,15 @@ kill "$sampler"
 ## 4. Accept
 
 ```bash
-cat "$OUT/a-to-b.exit" "$OUT/b-to-a.exit"   # both 0
+cat "$OUT/a-to-b.exit" "$OUT/b-to-a.exit"                 # both 0
 python3 evidence/check_discovery_junit.py --expected evidence/attachment-analysis.json \
-  --reports "$OUT/a-to-b.xml" "$OUT/b-to-a.xml"
+  --reports "$OUT/a-to-b.xml" "$OUT/b-to-a.xml"          # exit 0
+grep -c ' restricted-v2 [1-9]' "$OUT/helper-pods.log"   # nonzero
 grep -v ' restricted-v2 [1-9]' "$OUT/helper-pods.log"   # no output
 ```
 
-The checker requires each of the 14 original cases to appear exactly once and pass in both reports. The last command requires
-every sampled helper to run under restricted-v2 with a nonzero UID; restricted-v2 only admits UIDs from the namespace range.
-Make sure step 2's grant is gone first.
+The checker requires each of the 14 original cases to appear exactly once and pass in both reports. The two greps require that
+helpers were sampled, and that every one ran under restricted-v2 with a nonzero UID; restricted-v2 only admits UIDs from the
+namespace range.
 
 Close ACM-48176 and its duplicate ACM-48194 when step 1 showed the UID rejection and step 4 passes.

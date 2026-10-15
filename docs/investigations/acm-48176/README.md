@@ -8,7 +8,7 @@ ACM-48194 is a duplicate.
 `subctl verify --only service-discovery` on OpenShift 4.19 and 4.20 fails 14 cases while setting up its helper Deployments,
 before any DNS check runs. The [attached run](evidence/attachment-analysis.json) shows:
 
-- All 14 helper Deployment creates (`nginx-demo` on both clusters, `netshoot` on the 4.20 cluster) end with zero pods.
+- All 14 helper Deployments end with zero pods: 10 `nginx-demo` (6 on 4.19, 4 on 4.20) and 4 `netshoot` (on 4.20).
 - All 4 StatefulSets in the same namespaces reach Running. They use the same image, service account, and `nginx-demo` command,
   but have no securityContext.
 
@@ -25,7 +25,7 @@ Running the real OpenShift admission code on the exact Deployments rejects the o
 `restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges`, and admits it once `runAsUser` is removed
 ([check](evidence/admission-check.log)).
 
-QE never passed these builders on OpenShift: 0.23.2 was never released to production, and 0.23.4 is the first QE run.
+Downstream QE never ran these builders on OpenShift before: 0.23.2 never reached downstream production, and 0.23.4 is the first QE run.
 The earlier fix attempt changed only Shipyard's CI YAML files, which `subctl verify` does not use.
 
 ## Fix
@@ -37,18 +37,19 @@ For each target cluster, the builders query API discovery:
 | Serves the `security.openshift.io` API group | Unset; SCC admission assigns a UID from the namespace range |
 | Anything else | 10000, as today |
 
-Plain Kubernetes keeps 10000 because Subctl uses the nettest image of the deployed Submariner version, and images up to 0.23.2
-default to root ([image users](evidence/image-users.json)). Without an explicit UID, `runAsNonRoot` would reject them. The lookup
-is bounded by the operation timeout and fails the test if discovery fails. All other hardening is unchanged.
+Plain Kubernetes keeps 10000 because Subctl uses the nettest image of the deployed Submariner version. The 0.23.2 image
+defaults to root (0.23.3 and later use 10000; see [image users](evidence/image-users.json)), and without an explicit UID
+`runAsNonRoot` would reject it. Discovery retries transient errors within the operation timeout and otherwise fails the test.
+All other hardening is unchanged.
 
-The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl; no image or operator change is involved.
+The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No image or operator change is needed.
 
 ## Next steps
 
-1. QE reproduces the rejection in scratch namespaces, which takes minutes: [QE step 1](QE-VALIDATION.md#1-reproduce-the-rejection).
-2. Open the nine Lighthouse PRs together, `release-0.23` first to merge ([plan](PLAN.md)).
-3. The release owner chooses a 0.23.4 Subctl respin or 0.23.5.
-4. QE accepts the rebuilt Subctl: all 14 cases pass in both directions ([QE steps 3–4](QE-VALIDATION.md#3-run-discovery-with-the-fixed-subctl)).
-5. Publish a known-issue note for the affected shipped Subctl releases.
+1. **QE** reproduces the rejection in scratch namespaces, which takes minutes: [QE step 1](QE-VALIDATION.md#1-reproduce-the-rejection).
+2. **Developer** opens the nine Lighthouse PRs together and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
+3. **Release owners** ship the fix in 0.23.5, and hold downstream 0.22.2 and 0.24.2 until they include it ([delivery](PLAN.md#delivering-subctl)).
+4. **QE** accepts the rebuilt Subctl: all 14 cases pass in both directions ([QE steps 3–4](QE-VALIDATION.md#3-run-discovery-with-the-fixed-subctl)).
+5. **Developer** adds a known-issue note to the affected upstream Subctl releases.
 
 The [evidence index](evidence/README.md) maps each claim to its supporting files.

@@ -5,9 +5,10 @@
 | The QE run fails 14 cases at helper setup; every helper Deployment gets zero pods; every StatefulSet runs | [attachment-analysis.json](attachment-analysis.json), [provenance.json](provenance.json) |
 | These are the exact Deployments the v0.23.4 builders create | [repro/original](repro/original), from [export-deployments.go.txt](export-deployments.go.txt) |
 | SCC admission rejects the original, admits the corrected version, and a nonroot-v2 grant admits the original | [admission-check.go.txt](admission-check.go.txt), [admission-check.log](admission-check.log) |
-| Nettest images up to 0.23.2 default to root; later images use UID 10000 | [image-users.json](image-users.json) |
+| The 0.23.2 nettest image defaults to root; 0.23.3 and later use UID 10000 | [image-users.json](image-users.json) |
 | The hardened helpers work under an arbitrary UID with a read-only root and no capabilities | [runtime-check.py](runtime-check.py), [runtime-results.json](runtime-results.json) |
-| The helper classifies a real kube-apiserver correctly as an unprivileged user | [real-apiserver-check.go.txt](real-apiserver-check.go.txt), [devel log](real-apiserver-devel.log), [0.23 log](real-apiserver-0.23.log) |
+| The helper classifies a real kube-apiserver correctly as an unprivileged user | [devel check](real-apiserver-check.go.txt) and [log](real-apiserver-devel.log); [0.23 check](real-apiserver-check-0.23.go.txt) and [log](real-apiserver-0.23.log) |
+| Every branch builds, passes, and fails on its original code | [branch-verification.log](branch-verification.log) |
 | The fix for each branch, and the PR body | [lighthouse-branches](lighthouse-branches) |
 | QE acceptance of the JUnit reports | [check_discovery_junit.py](check_discovery_junit.py) |
 
@@ -32,5 +33,5 @@
 - The runtime checks used rootless Podman, not CRI-O.
 - Custom SCCs, restricted-v3-only policies, and restricted Pod Security namespaces are not covered.
 
-Earlier exploratory material lives in git history at `9af2ecba`: the first candidate patch, its test logs, the event collector,
-Subctl build records, the 4.19 run, and the review write-ups.
+Earlier exploratory material lives in git history at `9af2ecba` (branch `investigate/acm-48176-nettest`): the first candidate
+patch, its test logs, the event collector, Subctl build records, the 4.19 run, and the review write-ups.
