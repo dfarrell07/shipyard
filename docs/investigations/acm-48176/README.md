@@ -35,9 +35,21 @@ external API location. The SCC error path reflects internal Kubernetes types; AP
 Sources: [SCC UID defaulting and validation](https://github.com/openshift/apiserver-library-go/blob/f0d44ef6e53b49bd864c035752191a85b293af14/pkg/securitycontextconstraints/user/mustrunasrange.go),
 [internal/external API conversion](https://github.com/kubernetes/kubernetes/blob/v1.33.2/pkg/apis/core/v1/conversion.go#L302).
 
+## Direct admission check
+
+The [32-case offline check](evidence/ADMISSION-CHECK.md) executes pinned OpenShift 4.20 admission mutation and validation code against
+exports from Lighthouse v0.23.4 and the patched builders. With pinned shipped restricted policies and a namespace UID-range fixture,
+both original templates are rejected; both patched templates select `restricted-v2` and receive UID 1001530000. Other hardening is
+preserved. Privileged-access controls admit the original; no-grant and v3-only controls remain rejected.
+
+This supports the fix under default restricted-policy access. A v3-only cluster requires separate user-namespace qualification.
+On plain Kubernetes, omitting the UID also relies on the image's non-root default; the two tested images meet that requirement,
+but older/custom root-default images may not. These checks do not establish the failing QE cluster's policy or binary identity.
+
 ## Evidence and limits
 
-The [report snapshot](evidence/issue.json), inspected October 15, 2026, contains 14 discovery failures and no attached logs or comments.
+The [report snapshot](evidence/issue.json), inspected October 15, 2026, contains 14 discovery failures.
+The API returned no attachments or comments on recheck.
 It names Shipyard v0.23.4, but does not establish the failing executable's Lighthouse revision, image digest, or OpenShift version.
 The description says 0.23.4 while the affected-version metadata says 0.23.2.
 

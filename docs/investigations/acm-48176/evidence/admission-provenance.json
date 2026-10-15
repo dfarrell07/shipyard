@@ -1,0 +1,44 @@
+{
+  "lighthouse_version": "v0.23.4",
+  "lighthouse_commit": "39802358763f6edf93850d1b863fec74aca64d08",
+  "lighthouse_module_sum": "h1:emztnGWwi7uwWb7LakoxE/nyHFyxnA7b+m+v708fuPk=",
+  "admission_library_commit": "f0d44ef6e53b49bd864c035752191a85b293af14",
+  "policy_repository_commit": "3915db668832c6d730f0ba4fe87604564204ff46",
+  "namespace_uid_annotation_fixture": "1001530000/10000",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_scc-restricted-v2.yaml",
+      "sha256": "c68fbfc04cf0373b800a36e3bdc7559ce1f3868a6d083fef5dc50e0d5e1d8d8e",
+      "json_input_filename": "restricted-v2-scc.json"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_scc-restricted-v3.yaml",
+      "sha256": "da24fe60815949b46e754ee127b33572ebf31f4bd5a719048fa501ab106f389d",
+      "json_input_filename": "restricted-v3-scc.json"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_scc-anyuid.yaml",
+      "sha256": "d9d26ad6a6c673557944f50ac9906d9244388be973db34065d48a50509594767",
+      "json_input_filename": "anyuid-scc.json"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_scc-privileged.yaml",
+      "sha256": "b937b3aec8125a8c0d462c26787c445c85550bc8ef5eefb2e32e2e4b7616583e",
+      "json_input_filename": "privileged-scc.json"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_crb-systemauthenticated-scc-restricted-v2.yaml",
+      "sha256": "999990ecd0ec773fec31868032032dc00022949731fc98c5d1991dcc7b8b566d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openshift/cluster-kube-apiserver-operator/3915db668832c6d730f0ba4fe87604564204ff46/bindata/bootkube/scc-manifests/0000_20_kube-apiserver-operator_00_crb-systemauthenticated-scc-restricted-v3.yaml",
+      "sha256": "26e84a5152ac9ae57fd1c9d5e532632c35f13428d75579fc01c1d456d82878f4"
+    }
+  ],
+  "template_sha256": {
+    "original/nginx-demo": "da1367f688fa76a3310ff48f0b478028f55ce749a9515c7a8b9837d4dbc91133",
+    "original/netshoot": "c1cb87e7e93c2a6474e08f291df39484016c986f013d07a2c3c37569e7de41d2",
+    "patched/nginx-demo": "c4fcc82aa7ddc52123a48020cab113bb5a452bf25da972d12348d6405977483b",
+    "patched/netshoot": "21416d81bfe9f1564bec5286d2a824527a8530366793062d921ddb6b57ebe0a0"
+  }
+}

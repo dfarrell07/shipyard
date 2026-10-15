@@ -1,0 +1,72 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+
+	"github.com/onsi/gomega"
+	lh "github.com/submariner-io/lighthouse/test/e2e/framework"
+	sy "github.com/submariner-io/shipyard/test/e2e/framework"
+	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+)
+
+func main() {
+	if len(os.Args) != 2 {
+		panic("output directory required")
+	}
+	out := os.Args[1]
+	if err := os.MkdirAll(out, 0o700); err != nil {
+		panic(err)
+	}
+	gomega.RegisterFailHandler(func(message string, _ ...int) { panic(message) })
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost {
+			dep := &apps.Deployment{}
+			if err := json.NewDecoder(r.Body).Decode(dep); err != nil {
+				panic(err)
+			}
+			name := dep.Name
+			if name == "" {
+				name = "netshoot"
+				dep.Name = name
+			}
+			pod := &v1.Pod{TypeMeta: meta.TypeMeta{APIVersion: "v1", Kind: "Pod"}, ObjectMeta: meta.ObjectMeta{Name: name, Namespace: "scc-proof"}, Spec: dep.Spec.Template.Spec}
+			data, err := json.MarshalIndent(pod, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+			if err := os.WriteFile(filepath.Join(out, name+".json"), append(data, '\n'), 0o600); err != nil {
+				panic(err)
+			}
+			if err := json.NewEncoder(w).Encode(dep); err != nil {
+				panic(err)
+			}
+			return
+		}
+		pods := &v1.PodList{TypeMeta: meta.TypeMeta{APIVersion: "v1", Kind: "PodList"}, Items: []v1.Pod{{ObjectMeta: meta.ObjectMeta{Name: "ready"}, Status: v1.PodStatus{Phase: v1.PodRunning}}}}
+		if err := json.NewEncoder(w).Encode(pods); err != nil {
+			panic(err)
+		}
+	}))
+	defer server.Close()
+	client, err := kubernetes.NewForConfig(&rest.Config{Host: server.URL, ContentConfig: rest.ContentConfig{ContentType: "application/json"}})
+	if err != nil {
+		panic(err)
+	}
+	sy.KubeClients = []*kubernetes.Clientset{client}
+	sy.TestContext.OperationTimeout = 5
+	f := &lh.Framework{Framework: sy.NewBareFramework("scc-proof")}
+	f.Namespace = "scc-proof"
+	f.NewNginxDeployment(sy.ClusterA)
+	f.NewNetShootDeploymentInNS(sy.ClusterA, f.Namespace)
+	fmt.Println("Exported both actual Lighthouse v0.23.4 Deployment pod templates")
+}

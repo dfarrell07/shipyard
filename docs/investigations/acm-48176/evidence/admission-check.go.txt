@@ -1,0 +1,162 @@
+package sccadmission
+
+import (
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+
+	securityv1 "github.com/openshift/api/security/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	core "k8s.io/kubernetes/pkg/apis/core"
+	conversion "k8s.io/kubernetes/pkg/apis/core/v1"
+)
+
+type shippedPolicyGrant struct{ mode string }
+
+func (a shippedPolicyGrant) Authorize(_ context.Context, attrs authorizer.Attributes) (authorizer.Decision, string, error) {
+	if attrs.GetVerb() == "use" && attrs.GetResource() == "securitycontextconstraints" {
+		if a.mode != "no-grants" && (attrs.GetName() == "restricted-v3" || (a.mode != "v3-only" && attrs.GetName() == "restricted-v2")) {
+			return authorizer.DecisionAllow, "fixture for stock authenticated grants", nil
+		}
+		if attrs.GetName() == "privileged" && ((a.mode == "privileged-requester" && attrs.GetUser().GetName() == "test-admin") || (a.mode == "privileged-sa" && attrs.GetUser().GetName() == "system:serviceaccount:scc-proof:default")) {
+			return authorizer.DecisionAllow, "fixture for additional privileged grant", nil
+		}
+		if attrs.GetName() == "anyuid" && ((a.mode == "requester-anyuid" && attrs.GetUser().GetName() == "test-admin") || (a.mode == "sa-anyuid" && attrs.GetUser().GetName() == "system:serviceaccount:scc-proof:default")) {
+			return authorizer.DecisionAllow, "fixture for additional anyuid grant", nil
+		}
+	}
+	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func TestACM48176ShippedPolicies(t *testing.T) {
+	original, fixed := os.Getenv("ACM_PROOF_ORIGINAL"), os.Getenv("ACM_PROOF_FIXED")
+	if original == "" || fixed == "" {
+		t.Fatal("explicit exported template directories required")
+	}
+	type scenario struct {
+		mode                      string
+		patched, userns, accepted bool
+	}
+	var scenarios []scenario
+	for _, patched := range []bool{false, true} {
+		for _, mode := range []string{"default-controller", "requester-anyuid", "sa-anyuid", "privileged-requester", "privileged-sa", "no-grants", "v3-only"} {
+			scenarios = append(scenarios, scenario{mode: mode, patched: patched, accepted: (patched || mode == "privileged-requester" || mode == "privileged-sa") && mode != "no-grants" && mode != "v3-only"})
+		}
+	}
+	scenarios = append(scenarios, scenario{mode: "default-controller", userns: true, accepted: true}, scenario{mode: "default-controller", patched: true, userns: true, accepted: true})
+	var results []map[string]interface{}
+	for _, name := range []string{"nginx-demo", "netshoot"} {
+		for _, tc := range scenarios {
+			label := name + "/" + tc.mode + map[bool]string{false: "/original", true: "/patched"}[tc.patched]
+			if tc.userns {
+				label += "/hostUsers-false-control"
+			}
+			t.Run(label, func(t *testing.T) {
+				dir := original
+				if tc.patched {
+					dir = fixed
+				}
+				data, err := os.ReadFile(filepath.Join(dir, name+".json"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				var external v1.Pod
+				if err := json.Unmarshal(data, &external); err != nil {
+					t.Fatal(err)
+				}
+				external.Spec.ServiceAccountName = "default"
+				if tc.userns {
+					no := false
+					external.Spec.HostUsers = &no
+				}
+				var pod core.Pod
+				if err := conversion.Convert_v1_Pod_To_core_Pod(&external, &pod, nil); err != nil {
+					t.Fatal(err)
+				}
+				namespace := createNamespaceForTest()
+				namespace.Name = "scc-proof"
+				namespace.Annotations[securityv1.UIDRangeAnnotation] = "1001530000/10000"
+				namespace.Annotations[securityv1.SupplementalGroupsAnnotation] = "1001530000/10000"
+				var sccs []*securityv1.SecurityContextConstraints
+				for _, policy := range []string{"restricted-v2", "restricted-v3", "anyuid", "privileged"} {
+					bytes, err := os.ReadFile(filepath.Join(original, policy+"-scc.json"))
+					if err != nil {
+						t.Fatal(err)
+					}
+					scc := &securityv1.SecurityContextConstraints{}
+					if err := json.Unmarshal(bytes, scc); err != nil {
+						t.Fatal(err)
+					}
+					sccs = append(sccs, scc)
+				}
+				for _, scc := range requiredSCCForNames() {
+					if scc.Name != "restricted-v2" && scc.Name != "anyuid" && scc.Name != "privileged" {
+						sccs = append(sccs, scc)
+					}
+				}
+				plugin := newTestAdmission(createSCCLister(t, sccs), createNamespaceLister(t, namespace), shippedPolicyGrant{mode: tc.mode})
+				requester := &user.DefaultInfo{Name: "system:serviceaccount:kube-system:replicaset-controller", Groups: []string{"system:authenticated", "system:serviceaccounts"}}
+				if tc.mode == "requester-anyuid" || tc.mode == "privileged-requester" {
+					requester = &user.DefaultInfo{Name: "test-admin", Groups: []string{"system:authenticated"}}
+				}
+				attrs := admission.NewAttributesRecord(&pod, nil, core.Kind("Pod").WithVersion("v1"), pod.Namespace, pod.Name, core.Resource("pods").WithVersion("v1"), "", admission.Create, nil, false, requester)
+				err = plugin.(admission.MutationInterface).Admit(context.Background(), attrs, nil)
+				accepted := err == nil
+				row := map[string]interface{}{"pod": name, "patched": tc.patched, "hostUsers_false_control": tc.userns, "grant_fixture": tc.mode, "accepted": accepted, "expected": tc.accepted}
+				if err != nil {
+					row["error"] = err.Error()
+				}
+				if accepted {
+					row["selected_scc"] = pod.Annotations[securityv1.ValidatedSCCAnnotation]
+					row["authorized_subject"] = pod.Annotations["security.openshift.io/validated-scc-subject-type"]
+					uid := pod.Spec.Containers[0].SecurityContext.RunAsUser
+					if uid == nil {
+						uid = pod.Spec.SecurityContext.RunAsUser
+					}
+					row["effective_pod_uid"] = uid
+					if uid == nil {
+						row["uid_source"] = "image default, not resolved by admission"
+					}
+					if validationErr := plugin.(admission.ValidationInterface).Validate(context.Background(), attrs, nil); validationErr != nil {
+						t.Fatal(validationErr)
+					}
+					sc := pod.Spec.Containers[0].SecurityContext
+					if sc.ReadOnlyRootFilesystem == nil || !*sc.ReadOnlyRootFilesystem || sc.AllowPrivilegeEscalation == nil || *sc.AllowPrivilegeEscalation {
+						t.Fatal("hardening changed")
+					}
+					if pod.Spec.SecurityContext.RunAsNonRoot == nil || !*pod.Spec.SecurityContext.RunAsNonRoot {
+						t.Fatal("non-root requirement changed")
+					}
+					dropAll := false
+					for _, capability := range sc.Capabilities.Drop {
+						if capability == "ALL" {
+							dropAll = true
+						}
+					}
+					if !dropAll {
+						t.Fatal("capability drop changed")
+					}
+					if tc.mode == "default-controller" && !tc.userns && tc.patched && (uid == nil || *uid != 1001530000) {
+						t.Fatal("namespace UID defaulting did not occur")
+					}
+				}
+				results = append(results, row)
+				if accepted != tc.accepted {
+					t.Fatalf("unexpected result: %v", err)
+				}
+			})
+		}
+	}
+	data, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(os.Getenv("ACM_PROOF_RESULTS"), append(data, '\n'), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
