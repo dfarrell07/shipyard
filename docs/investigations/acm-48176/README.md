@@ -24,9 +24,11 @@ The Glasswing hardening added an explicit pod UID of 10000. OpenShift's range-co
 outside the namespace allocation. Omitting it permits SCC defaulting. The image's default USER is a separate setting and should
 remain non-root.
 
-All 14 reported discovery cases reach a netshoot Deployment in the inspected Lighthouse 0.23 source; most also create an nginx
-Deployment. The StatefulSet cases create netshoot after creating the StatefulSet, so their names do not exclude this failure path.
-The [case mapping](evidence/failure-paths.json) records the relevant setup calls.
+The attached logs show all 14 discovery failures occur during helper Deployment setup, before DNS checks: 10 time out with zero
+`nginx-demo` pods and four with zero `netshoot` pods. The three StatefulSet cases complete StatefulSet setup, then fail at netshoot
+setup. The fourth netshoot failure is the headless service without a selector. This matches the two builders containing the UID
+override. The [case mapping](evidence/failure-paths.json) records the intended setup sequence; the ten nginx failures never reach
+their later netshoot call. The [attachment analysis](evidence/attachment-analysis.json) records each observed failure.
 
 The earlier Shipyard follow-up briefly added `securityContext.hostUsers`, then removed it before v0.23.4. That is an invalid
 external API location. The SCC error path reflects internal Kubernetes types; API conversion places the external field at
@@ -44,17 +46,27 @@ preserved. Privileged-access controls admit the original; no-grant and v3-only c
 
 This supports the fix under default restricted-policy access. A v3-only cluster requires separate user-namespace qualification.
 On plain Kubernetes, omitting the UID also relies on the image's non-root default; the two tested images meet that requirement,
-but older/custom root-default images may not. These checks do not establish the failing QE cluster's policy or binary identity.
+but older/custom root-default images may not. These checks do not establish the failing QE cluster's policy or executable checksum.
 
 ## Evidence and limits
 
-The [report snapshot](evidence/issue.json), inspected October 15, 2026, contains 14 discovery failures.
-The API returned no attachments or comments on recheck.
-It names Shipyard v0.23.4, but does not establish the failing executable's Lighthouse revision, image digest, or OpenShift version.
-The description says 0.23.4 while the affected-version metadata says 0.23.2.
+The [authenticated report snapshot](evidence/issue.json), inspected October 15, 2026, includes `e2e.zip` (attachment 1249936,
+23,746 bytes) and two comments. The earlier anonymous API response hid these; its empty lists were insufficient evidence that
+there were no attachments. The attachment was retrieved using the existing `acli` authentication.
 
-Every failure points to the generic polling assertion at `framework.go:605`. That line alone does not identify the failing operation.
-SCC admission is the leading hypothesis, not a confirmed diagnosis of the QE run.
+The console and JUnit agree on all 14 zero-pod failures. Source paths identify Lighthouse, Shipyard, and Submariner v0.23.4.
+The matching run filenames identify OpenShift 4.20 and 4.19; diagnose reports Kubernetes v1.32.13 for the diagnosed cluster.
+Subctl reports `release-0.23`. The description says 0.23.4 while affected-version metadata says 0.23.2.
+
+Zero pods narrows the failure to pod creation rather than a reported running-container or DNS error. The v0.23.4 helper waits
+list all matching pods before testing their phase: an image-pull or scheduling failure would normally leave an existing Pending
+pod and report its phase, rather than a zero count. SCC rejection fits this observation, but other admission failures or
+controller failures can also prevent pod creation. The archive has no ReplicaSet events, SCC selection, namespace UID allocation,
+exact nettest image digest, or executable checksum. UID rejection remains the leading explanation, not a confirmed QE admission event.
+
+The archive also contains a separate AWS 4.21 attempt that panics before specs; its diagnostics report Submariner missing.
+That setup failure is separate from the 14 discovery failures. Full raw logs remain local; the branch records selected diagnostic
+findings and artifact hashes without copying network addresses or restricted comment bodies.
 
 Local checks of the two pinned images show:
 
@@ -68,9 +80,9 @@ These local checks do not exercise OpenShift admission. The available cluster cr
 
 ## Remaining steps
 
-1. Obtain the complete failure output, failing executable's dependency versions, and exact nettest image digest.
-2. Check the failing namespace's ReplicaSet events for FailedCreate and UID 10000 rejection. If the failure instead concerns
-   image pulling, scheduling, a crashing process, or DNS after successful setup, revisit this diagnosis.
+1. Obtain the exact nettest image digest and executable checksum; the attached output already identifies Lighthouse v0.23.4.
+2. Capture the failing Deployment and ReplicaSet status/events before test namespace cleanup. Confirm FailedCreate and UID 10000
+   rejection, and record the namespace UID allocation and available SCCs. Revisit the diagnosis if another creation failure is shown.
 3. Apply the Lighthouse patch, update and rebuild Subctl, and rerun the discovery tests on the target OpenShift clusters.
    Retain the selected SCC and admitted UID to verify the correction through the real controller path.
 

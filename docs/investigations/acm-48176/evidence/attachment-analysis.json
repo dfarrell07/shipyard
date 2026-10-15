@@ -1,0 +1,196 @@
+{
+  "issue": "ACM-48176",
+  "attachment": {
+    "id": "1249936",
+    "filename": "e2e.zip",
+    "size_bytes": 23746,
+    "sha256": "5aa980c20413acac012b2913fa9522083ce2559a192b54e986d22f7964cf1a47"
+  },
+  "retrieval": "Authenticated acli attachment metadata, then authenticated Jira attachment content API using the existing CLI credential. No credentials are included.",
+  "raw_artifacts": "Retained locally; full logs, network addresses, identities, and restricted comment bodies are not copied into this branch.",
+  "archive_files": [
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-AWS-4.21-NonGlobalnet_subctl_diagnose_all.log",
+      "bytes": 429,
+      "sha256": "66ada14aab31ade1493b957b9834a7288d1f34c9d261c41e2e504bb5943370d2"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-AWS-4.21-NonGlobalnet_subctl_e2e_tests.log",
+      "bytes": 4467,
+      "sha256": "48624fdb3470fcdc361c419f7a1fbe4eb0be55623269b2ca8d034b4de7e67732"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-AWS-4.21-NonGlobalnet_subctl_firewall_tests.log",
+      "bytes": 2911,
+      "sha256": "59bd8b894bfff0fcd2703984189772fe2dae475b80be03e5858751f28021a3cc"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-AWS-4.21-NonGlobalnet_subctl_show_all.log",
+      "bytes": 2499,
+      "sha256": "56ca173e1d68257bf7d4f57f5299be6b812ca4f43b3d8cc2180d64e75dbb6297"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_e2e_junit.xml",
+      "bytes": 102546,
+      "sha256": "331ac2991087fffdf9994a5eb598d0cf580ea4d1b9af1f20e99b036a8012ce59"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_subctl_diagnose_all.log",
+      "bytes": 3484,
+      "sha256": "947e9fa72f0599a7c431acb56eb88fd5e5fe87d06b69052d978615f055c37da4"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_subctl_e2e_tests.log",
+      "bytes": 92304,
+      "sha256": "2c4850a3d840fc284151b5f370de1953868f646cd564744b6890aa752d5b7e7a"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_subctl_firewall_tests.log",
+      "bytes": 1073,
+      "sha256": "79877e072d4212007d302a78d0288b2b0736427694a813c4d3ed4042bcf7c0a7"
+    },
+    {
+      "path": "e2e/ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_subctl_show_all.log",
+      "bytes": 4600,
+      "sha256": "a727063e7c8b0ae2ee4b3d3180882aab50acab3201a200039c97ef5e91f5ace3"
+    }
+  ],
+  "console": "ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_subctl_e2e_tests.log",
+  "junit": "ACM-2.16.6-Submariner--GCP-4.20-Azure-4.19-NonGlobalnet_e2e_junit.xml",
+  "suite": {
+    "tests": 50,
+    "passed": 15,
+    "failed": 14,
+    "skipped": 21,
+    "seconds": 3504.40826125
+  },
+  "failed_pod_labels": {
+    "app=netshoot": 4,
+    "app=nginx-demo": 10
+  },
+  "failures": [
+    {
+      "test": "[It] Test Stateful Sets Discovery Across Clusters when a pod tries to resolve a podname from stateful set in a remote cluster should resolve the pod IP from the remote cluster [service-discovery]",
+      "label": "app=netshoot",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 255.214187388,
+      "console_failure_line": 116
+    },
+    {
+      "test": "[It] Test Stateful Sets Discovery Across Clusters when a pod tries to resolve a podname from stateful set in a local cluster should resolve the pod IP from the local cluster [service-discovery]",
+      "label": "app=netshoot",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 250.994741898,
+      "console_failure_line": 145
+    },
+    {
+      "test": "[It] Test Stateful Sets Discovery Across Clusters when the number of active pods backing a stateful set changes should only resolve the IPs from the active pods [service-discovery]",
+      "label": "app=netshoot",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 245.754890031,
+      "console_failure_line": 171
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when a pod tries to resolve a headless service in a remote cluster should resolve the backing pod IPs from the remote cluster [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.376527404,
+      "console_failure_line": 192
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when a pod tries to resolve a headless service which is exported locally and in a remote cluster should resolve the backing pod IPs from both clusters [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.348661946,
+      "console_failure_line": 213
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when a pod tries to resolve a headless service without selector in a remote cluster should resolve the backing endpoint IPs from the remote cluster [service-discovery]",
+      "label": "app=netshoot",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 242.61039308,
+      "console_failure_line": 239
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when the number of active pods backing a service changes should only resolve the IPs from the active pods [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.384860457,
+      "console_failure_line": 260
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when the number of active pods backing a service changes should resolve the local pod IPs [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.386489524,
+      "console_failure_line": 281
+    },
+    {
+      "test": "[It] Test Headless Service Discovery Across Clusters when a pod tries to resolve a headless service in a specific remote cluster by its cluster name should resolve the backing pod IPs from the specified remote cluster [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.365435445,
+      "console_failure_line": 302
+    },
+    {
+      "test": "[It] Test Service Discovery Across Clusters when a pod tries to resolve a service in a remote cluster should be able to discover the remote service successfully [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.434393432,
+      "console_failure_line": 337
+    },
+    {
+      "test": "[It] Test Service Discovery Across Clusters when a pod tries to resolve a service which is present locally and in a remote cluster should resolve the local service [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.366185666,
+      "console_failure_line": 358
+    },
+    {
+      "test": "[It] Test Service Discovery Across Clusters when service export is created before the service should resolve the service [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.405720126,
+      "console_failure_line": 381
+    },
+    {
+      "test": "[It] Test Service Discovery Across Clusters when there are no active pods for a service should not resolve the service [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.364704991,
+      "console_failure_line": 402
+    },
+    {
+      "test": "[It] Test Service Discovery Across Clusters when a pod tries to resolve a service in a specific remote cluster by its cluster name should resolve the service on the specified cluster [service-discovery]",
+      "label": "app=nginx-demo",
+      "actual_pod_count": 0,
+      "expected_pod_count": 1,
+      "elapsed_seconds": 240.369296981,
+      "console_failure_line": 438
+    }
+  ],
+  "established": [
+    "All 14 failures occur while waiting for helper Deployment pods, before DNS assertions.",
+    "The console and JUnit agree on 10 nginx-demo and 4 netshoot zero-pod failures.",
+    "The console source paths identify Lighthouse v0.23.4, Shipyard v0.23.4, and Submariner v0.23.4.",
+    "The matching run filenames identify OpenShift 4.20 and 4.19; diagnose reports Kubernetes v1.32.13 for the diagnosed cluster.",
+    "The three StatefulSet cases finish StatefulSet setup and fail at netshoot setup."
+  ],
+  "not_established": [
+    "ReplicaSet FailedCreate events, rejected admission request, selected SCC, namespace UID allocation, exact nettest image digest, executable checksum.",
+    "The separate AWS 4.21 file fails before specs, and its diagnostics report Submariner missing. It is not part of the 14 discovery failures."
+  ]
+}
