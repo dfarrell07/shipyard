@@ -20,6 +20,9 @@ Retaining the explicit UID outside OpenShift preserves that working combination.
 Use the [Lighthouse 0.23 candidate patch](evidence/lighthouse-scc.patch), update Subctl to consume the corrected Lighthouse version,
 and rebuild it: these builders are compiled into its discovery tests. Updating the nettest image alone will not change them.
 
+The [implementation sequence](IMPLEMENTATION.md) specifies the helper, CI regression placement, dependency pin, fresh build,
+upstream/downstream delivery, and target-cluster acceptance checks.
+
 Shipyard 0.23 already corrected its independent helper YAML; the Lighthouse Go builders were missed by that follow-up.
 This branch contains notes, evidence, and a candidate patch only. The separate devel YAML change is tracked in
 [PR #2618](https://github.com/submariner-io/shipyard/pull/2618).
