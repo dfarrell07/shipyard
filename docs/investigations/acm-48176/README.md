@@ -1,7 +1,7 @@
 # ACM-48176: nettest helper pods rejected on OpenShift
 
 **Status:** diagnosed; draft Lighthouse PRs [#2324](https://github.com/submariner-io/lighthouse/pull/2324)–[#2332](https://github.com/submariner-io/lighthouse/pull/2332)
-are open for all nine branches.
+are open for all nine branches and updated for skitt's review. Backports wait for `devel` approval.
 ACM-48194 tracks the known-issue note.
 
 ## What fails
@@ -37,8 +37,9 @@ Deployed Submariner is unaffected. Of the shipped binaries, only Subctl links th
 the lighthouse-agent and coredns binaries do not link any Lighthouse `test/` package, and neither the operator nor the ACM addon
 uses them. The attached run's `subctl diagnose all` and connectivity tests pass.
 
-Users who run `subctl verify` against OpenShift with an affected Subctl get the same 14 false failures. Because every
-service-discovery case failed during setup, QE has no functional service-discovery result on OpenShift for 0.23.4.
+Users who run `subctl verify` against OpenShift with an affected Subctl can encounter these helper-setup failures. The attached
+run provides no service-discovery result because all 14 cases failed before their DNS checks. QE should confirm other coverage
+separately.
 
 ## Fix
 
@@ -60,14 +61,11 @@ The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No 
 
 ## Next steps
 
-1. **Developer** marks the nine draft PRs ready and merges them ([plan](PLAN.md)).
-2. **Release owners** ship without waiting for the fix; each branch's next regular release picks it up
-   ([delivery](PLAN.md#delivering-the-fix)). QE's run with the first such Subctl verifies the fix and closes ACM-48176.
-3. **Developer** adds a known-issue note to the affected Subctl releases.
-4. **QE** (optional) gets a service-discovery result for 0.23.4 without a rebuild, using the
-   [`nonroot-v2` check](PLAN.md#delivering-the-fix) on disposable test clusters.
-
-If the cases still fail with that grant, `oc create` the [original Deployments](evidence/repro/original), with `NETTEST_IMAGE`
-replaced, in a namespace with the e2e framework's labels. Their ReplicaSets report the admission decision directly.
+1. **Developer** marks [#2324](https://github.com/submariner-io/lighthouse/pull/2324) ready, gets it approved and merged, then
+   marks the backports ready ([plan](PLAN.md#landing)).
+2. **Release owners** pick up the fix through a Lighthouse tag, Subctl bump, and fresh Subctl build in each branch's next
+   regular release ([delivery](PLAN.md#delivering-the-fix)).
+3. **QE** runs `subctl verify --only service-discovery` with that Subctl on OpenShift to verify the fix and close ACM-48176.
+4. **Developer** adds the known-issue note tracked by ACM-48194 to the affected Subctl releases.
 
 The [evidence index](evidence/README.md) maps each claim to its supporting files.

@@ -3,79 +3,71 @@
 ## The Lighthouse change
 
 `NewNginxDeployment` and `NewNetShootDeploymentInNS` in `test/e2e/framework/deployments.go` get their pod `runAsUser` from a new
-private helper, `nettestRunAsUser`, as the [README](README.md#fix) describes. It GETs `/apis` inside `framework.AwaitUntil`; it
-uses the raw request because `Discovery().ServerGroups()` ignores context deadlines. Each branch has one commit, "Let OpenShift
-assign nettest helper pod UIDs", pushed to [`dfarrell07/lighthouse`](https://github.com/dfarrell07/lighthouse/branches) as
-`nettest-scc-uid-<branch>` and adapted to that branch's framework API:
+private helper, `nettestRunAsUser`, as the [README](README.md#fix) describes. It asks client-go for the target cluster's API
+groups inside `framework.AwaitUntil`, so transient errors retry within the operation timeout and anything else fails the test.
 
-| Branches | Variant |
+skitt's review of [#2324](https://github.com/submariner-io/lighthouse/pull/2324) rejected the earlier raw `/apis` request and
+said the comment applies to every branch, so all nine use client-go's discovery call:
+
+| Branches | Discovery call |
 | --- | --- |
-| `devel`, `release-0.25` | Builders take a `ctx`; `AwaitUntil` bounds each request; returns `new(int64(10000))` |
-| `release-0.22`–`release-0.24` | No builder `ctx`; the helper bounds its own; generic `AwaitUntil`; returns `ptr.To(int64(10000))` |
-| `release-0.19`–`release-0.21` | As above, with the pre-generics `AwaitUntil` and a type assertion |
-| `release-0.18` | As above, computing the timeout itself; Shipyard v0.18.5 lacks `OperationTimeoutToDuration()` |
+| `devel` (client-go v0.37) | `Discovery().ServerGroupsWithContext`, passed straight to `AwaitUntil` |
+| `release-0.25` | `ServerGroups()` in a `func(context.Context)` wrapper; its builders take a `ctx` |
+| `release-0.22`–`release-0.24` | `Discovery().ServerGroups`, passed straight to the generic `AwaitUntil` |
+| `release-0.18`–`release-0.21` | `ServerGroups()` in the pre-generics `AwaitUntil`, with a type assertion |
 
-On `devel` and `release-0.23`–`0.25`, the commit adds a three-spec Ginkgo suite in `test/unit/framework`, outside the `test/e2e`
-tree that the unit runner skips. It checks both builders' UID on an OpenShift and a plain fake cluster, and that a discovery
-failure stops the test before any Deployment is created.
+`ServerGroups()` ignores contexts, as skitt noted; on 0.18–0.24 the neighbouring Deployment create already uses
+`context.TODO()`. Each branch has one signed commit, "Let OpenShift assign nettest helper pod UIDs", pushed to
+[`dfarrell07/lighthouse`](https://github.com/dfarrell07/lighthouse/branches) as `nettest-scc-uid-<branch>`. The pre-review heads
+are kept locally as `backup/codex-scc-before-review/*`.
+
+On `devel` and `release-0.23`–`0.25`, the commit adds a three-spec Ginkgo suite in `test/unit/framework`. It checks both
+builders' UID on an OpenShift and a plain fake cluster, and that a discovery failure stops the test before any Deployment is
+created. The `release-0.18`–`0.22` unit runner skips every test directory whose test files mention `e2e`, and the suite must
+import `test/e2e/framework`, so those commits change only `deployments.go`; fixing that runner is separate work.
 
 ## Verification
 
-All nine branches build, and lint is clean apart from pre-existing findings in untouched files (0.18's v1 lint config is left to
-its CI). The suite passes with `-race` and randomized order, and every spec fails against the branch's original code. On `devel`
-it also rejects plausible wrong implementations: querying the wrong cluster, falling back to 10000 on errors, or a builder that
-ignores the helper ([log](evidence/branch-verification.log)).
-
-In the PRs' CI, E2E and unit jobs pass on all nine. Every other failing check fails the same way on a recent PR to the same
-branch, which each PR body names.
-
-Against a real kube-apiserver, as an unprivileged user, the helper returned 10000 on a plain server and nil once a
-`security.openshift.io` group was served (here via a CRD). It failed with `context deadline exceeded` under a zero timeout
-([devel](evidence/real-apiserver-devel.log), [0.23](evidence/real-apiserver-0.23.log)). On `release-0.23`, `runAsUser` is the
-only field that changes, so the OpenShift output is exactly the [corrected manifest](evidence/repro/corrected) that the
-admission check admits.
+All nine build, lint clean, and pass the suite with `-race` and randomized order; 0.18–0.22 get it through a `go test`
+overlay. Every spec fails on each branch's original code, and both UID-selection mutants are caught everywhere. Each code
+shape returned a nil UID against a live OpenShift API server ([log](evidence/branch-verification.log)).
 
 ## Landing
 
-The commits are per-branch ports, not cherry-picks of a merged `devel` commit, so all nine PRs are open together and linked.
-The original hardening went the same way (#2228–#2235). If review changes the code, apply the change to each variant.
-
-The `release-0.18`–`0.22` commits change only `deployments.go`. Their shared unit runner skips any test directory whose test files
-mention `e2e`, and the suite imports a `test/e2e` package, so CI there could never run it. Their PR bodies point to the `devel`
-PR for the regression tests.
+skitt asked for `devel` approval before backports. All nine stay drafts: mark `#2324` ready, get it approved and merged, then
+mark the backports ready. If review changes the code, apply the change to each variant.
 
 The 0.18–0.21 branches carry the bug, but no Subctl built from them includes it: their Subctl branches pin pre-hardening
-Lighthouse. Fixing them now keeps the next tag clean; they are lower priority.
+Lighthouse. Fixing them keeps the next tag clean; they are lower priority.
 
 ## Delivering the fix
 
-Deployed Submariner is unaffected ([impact](README.md#impact)), so no release is held or respun for this. Each branch's next
-regular release picks up the fix.
+Deployed Submariner is unaffected ([impact](README.md#impact)). The current plan is that each branch's next regular release
+picks up the fix; release owners decide any exception. Merging alone ships nothing: delivery needs a Lighthouse tag with the
+fix, a Subctl bump to that tag, and a fresh Subctl build.
 
-Merging alone ships nothing: delivery needs a Lighthouse tag with the fix, a Subctl bump to that tag, and a fresh Subctl build.
+- Downstream 0.23.4 (ACM-44527) is already built and ships with the known-issue note. Merging Lighthouse `release-0.23`
+  triggers the `lighthouse-agent-0-23` and `lighthouse-coredns-0-23` push pipelines, so keep the approved snapshot and bundle
+  digests rather than the latest snapshot.
+- For downstream 0.22.2 (ACM-45070) and 0.24.2 (ACM-47692), check the Lighthouse version in the actual Subctl build before
+  claiming the fix is included.
 
-- Downstream 0.23.4 (ACM-44527) ships as built, with the known-issue note. A respin would not be Subctl-only anyway: merging
-  Lighthouse `release-0.23` triggers the unfiltered `lighthouse-agent-0-23` and `lighthouse-coredns-0-23` push pipelines, so the
-  latest snapshot would no longer match the staged bundle.
-- Downstream 0.22.2 (ACM-45070) and 0.24.2 (ACM-47692) take the fix if it merges before their Subctl build, and otherwise ship
-  with the note.
-
-**Optional QE check.** To get a service-discovery result for 0.23.4 without a rebuild, on disposable test clusters only, run
+**Optional QE check.** To get a service-discovery result without a rebuild, on disposable test clusters only, run
 `oc adm policy add-scc-to-group nonroot-v2 system:serviceaccounts` on both clusters, rerun `subctl verify --only
 service-discovery`, then undo it with `oc adm policy remove-scc-from-group nonroot-v2 system:serviceaccounts`. The admission
-check admits both original Deployments under that grant ([log](evidence/admission-check.log)). It is a test-cluster check, not a
-customer workaround.
+check admits both original Deployments under that grant ([log](evidence/admission-check.log)). It is not a customer workaround
+and does not validate a fixed Subctl.
 
 ## Follow-ups
 
-- **Known issue:** add a note to the GitHub release notes of upstream Subctl v0.22.2, v0.23.2, v0.23.4, v0.24.2, v0.25.0-rc1,
-  and v0.26.0-m0, and to any downstream release that ships without the fix. The note: "`subctl verify --only
-  service-discovery` fails on OpenShift; deployed Submariner is unaffected. A later Subctl release fixes it."
+- **Known issue (ACM-48194):** add a note to the GitHub release notes of upstream Subctl v0.22.2, v0.23.2, v0.23.4, v0.24.2,
+  v0.25.0-rc1, and v0.26.0-m0, and to any downstream release that ships without the fix: "`subctl verify --only
+  service-discovery` fails on OpenShift; deployed Submariner is unaffected." Name the fixing Subctl release once one exists.
 - **Shipyard #2618:** it still sets UID 10000 in `devel`'s CI YAMLs. It is unrelated to `subctl verify`; merge it separately.
 
 ## Pull requests
 
-All drafts, each from `dfarrell07:nettest-scc-uid-<branch>`:
+All drafts, each from `dfarrell07:nettest-scc-uid-<branch>`; their bodies follow [pr-body.txt](evidence/pr-body.txt):
 
 | Branch | PR | Branch | PR |
 | --- | --- | --- | --- |
@@ -84,6 +76,3 @@ All drafts, each from `dfarrell07:nettest-scc-uid-<branch>`:
 | `release-0.24` | [#2326](https://github.com/submariner-io/lighthouse/pull/2326) | `release-0.19` | [#2331](https://github.com/submariner-io/lighthouse/pull/2331) |
 | `release-0.23` | [#2327](https://github.com/submariner-io/lighthouse/pull/2327) | `release-0.18` | [#2332](https://github.com/submariner-io/lighthouse/pull/2332) |
 | `release-0.22` | [#2328](https://github.com/submariner-io/lighthouse/pull/2328) | | |
-
-Their bodies start from [pr-body.txt](evidence/pr-body.txt). The 0.18–0.22 bodies point to #2324 for the tests, and every
-body lists the others.

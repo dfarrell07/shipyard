@@ -2,13 +2,16 @@
 
 | Claim | Files |
 | --- | --- |
-| The attached QE run fails 14 cases at helper setup; every helper Deployment gets zero pods; every StatefulSet runs | [attachment-analysis.json](attachment-analysis.json), [provenance.json](provenance.json) |
-| These are the exact Deployments the v0.23.4 builders create | [repro/original](repro/original), from [export-deployments.go.txt](export-deployments.go.txt) |
-| SCC admission rejects the original and admits the corrected version | [admission-check.go.txt](admission-check.go.txt), [admission-check.log](admission-check.log) |
-| Nettest images before v0.22.2, v0.23.3, and v0.24.2 default to root | [image-users.json](image-users.json) for 0.23.x; `USER 10000` first appears in those Shipyard tags' `Dockerfile.nettest` |
-| The helper classifies a real kube-apiserver correctly as an unprivileged user | [real-apiserver-check.go.txt](real-apiserver-check.go.txt), [devel log](real-apiserver-devel.log), [0.23 log](real-apiserver-0.23.log) |
-| Every branch builds, passes, and fails on its original code | [branch-verification.log](branch-verification.log) |
-| The PR body for every branch | [pr-body.txt](pr-body.txt) |
+| QE helper-setup failures and running StatefulSets | [Analysis](attachment-analysis.json), [provenance](provenance.json) |
+| Exact v0.23.4 helper Deployments | [Manifests](repro/original), [exporter](export-deployments.go.txt) |
+| Original rejection and corrected SCC admission | [Checker](admission-check.go.txt), [results](admission-check.log) |
+| Nettest image users on 0.23.x | [Registry inspection](image-users.json) |
+| Real kube-apiserver discovery as an unprivileged user | [Check](real-apiserver-check.go.txt), [devel](real-apiserver-devel.log) |
+| The same check on the release-branch helpers | [Results](real-apiserver-release.log) |
+| Every branch builds, passes, catches mutants, fails on its original code, and classifies live OpenShift | [branch-verification.log](branch-verification.log) |
+| The PR descriptions | [pr-body.txt](pr-body.txt) |
+
+Shipyard first sets `USER 10000` in `Dockerfile.nettest` in v0.22.2, v0.23.3, and v0.24.2. Earlier images default to root.
 
 ## Reproducing
 
@@ -20,13 +23,14 @@
   [provenance.json](provenance.json). The requester is the ReplicaSet controller, and the namespace range is `1001530000/10000`.
 - **Real kube-apiserver:** start envtest's etcd and kube-apiserver with [real-apiserver-run.sh.txt](real-apiserver-run.sh.txt).
   Write kubeconfigs for an admin token and a plain-user token, copy the check into Lighthouse `test/e2e/framework` as an internal
-  test, and run it with `ADMIN_KUBECONFIG`/`USER_KUBECONFIG` and `GOFLAGS=-mod=mod`. On `release-0.23`, drop the helper's `ctx`
-  argument and use `ptr.To(true)` instead of `new(true)`.
+  test, and run it with `ADMIN_KUBECONFIG`/`USER_KUBECONFIG` and `GOFLAGS=-mod=mod`. On the release branches, drop the helper's `ctx`
+  argument, use `ptr.To(true)` instead of `new(true)`, and drop the zero-budget assertion: `ServerGroups()` takes no context.
 
 ## Limits
 
-- None of these checks ran on an OpenShift cluster. The admission check uses fixture grants and namespace allocation;
-  ACM-44539's `FailedCreate` is the live rejection, and QE's run with a fixed Subctl supplies the live result.
+- The admission check uses fixture grants and namespace allocation. The helper's discovery was also checked against a live
+  OpenShift API server, without creating workloads or changing grants. Neither check is an OpenShift workload acceptance run;
+  ACM-44539's `FailedCreate` is the live rejection, and QE's run with a fixed Subctl supplies the end-to-end result.
 - 4.19 has no restricted-v3. An earlier run with 4.19's policy set gave the same restricted-v2 results.
 - Custom SCCs, restricted-v3-only policies, and restricted Pod Security namespaces are not covered.
 

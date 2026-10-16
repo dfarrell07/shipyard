@@ -1,0 +1,16 @@
+# release-0.23 458caa8e (same helper as 0.22/0.24), kube-apiserver 1.36.2 (envtest), unprivileged user.
+# ServerGroups() takes no context on this branch, so a zero budget still allows the first attempt.
+    zz_real_apiserver_internal_test.go:34: plain kube-apiserver: runAsUser=10000
+    zz_real_apiserver_internal_test.go:54: kube-apiserver serving security.openshift.io: runAsUser=nil
+    zz_real_apiserver_internal_test.go:61: zero budget failure: []
+--- PASS: TestNettestRunAsUserRealAPIServer (0.25s)
+PASS
+ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.267s
+
+# release-0.18 36686f9a (same helper as 0.19-0.21)
+    zz_real_apiserver_internal_test.go:34: plain kube-apiserver: runAsUser=10000
+    zz_real_apiserver_internal_test.go:54: kube-apiserver serving security.openshift.io: runAsUser=nil
+    zz_real_apiserver_internal_test.go:61: zero budget failure: []
+--- PASS: TestNettestRunAsUserRealAPIServer (0.25s)
+PASS
+ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.264s

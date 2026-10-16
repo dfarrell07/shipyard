@@ -1,6 +1,7 @@
+# devel 3ef433a4, kube-apiserver 1.36.2 (envtest), discovery as an unprivileged user
     zz_real_apiserver_internal_test.go:33: plain kube-apiserver: runAsUser=10000
     zz_real_apiserver_internal_test.go:53: kube-apiserver serving security.openshift.io: runAsUser=nil
     zz_real_apiserver_internal_test.go:60: zero budget failure: ["Failed to discover API groups for nettest UID selection\nUnexpected error:\n    <context.deadlineExceededError>: \n    context deadline exceeded\n    {}\noccurred"]
---- PASS: TestNettestRunAsUserRealAPIServer (0.24s)
+--- PASS: TestNettestRunAsUserRealAPIServer (0.25s)
 PASS
-ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.315s
+ok  	github.com/submariner-io/lighthouse/test/e2e/framework	0.266s

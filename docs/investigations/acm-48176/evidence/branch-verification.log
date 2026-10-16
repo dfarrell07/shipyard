@@ -1,15 +1,22 @@
-# GOWORK=off; Go 1.26.8; golangci-lint 2.11.3. Lint counts exclude pre-existing findings in untouched files.
-# "original-code" swaps in the branch's original deployments.go and reruns the suite; every spec must fail.
-devel         build=ok lint=0 test=3 Passed | 0 Failed original-code=0 Passed | 3 Failed
-release-0.25  build=ok lint=0 test=3 Passed | 0 Failed original-code=0 Passed | 3 Failed
-release-0.24  build=ok lint=0 test=3 Passed | 0 Failed original-code=0 Passed | 3 Failed
-release-0.23  build=ok lint=0 test=3 Passed | 0 Failed original-code=0 Passed | 3 Failed
+# Verification of the PR heads after skitt's review, 2026-10-16.
+# GOWORK=off; Go 1.26.8; golangci-lint 2.11.3; lint is changed-code only (--new-from-rev=HEAD~1).
+# 0.18-0.20 lint uses a temporary `golangci-lint migrate` copy of the branch's v1 config; no branch config changes.
+# Suite: the three specs, -race, -ginkgo.randomize-all -ginkgo.seed=48176. 0.18-0.22 do not carry the suite (their unit
+# runner skips test dirs whose _test.go files mention e2e), so release-0.23's suite is supplied with `go test -overlay`.
+# Mutants: "openshift->10000" breaks out of the group loop instead of returning nil; "plain->nil" returns nil everywhere.
+# "original" swaps in the branch's pre-fix deployments.go.
+# Live: the real nettestRunAsUser against an OpenShift API server (discovery GET only; no objects or grants changed).
 
-# release-0.18..0.22 ship deployments.go only. Before the suite was dropped there, an earlier, larger form of it passed on each
-# and every spec failed on the original code. All five still build; lint was clean on 0.19-0.22 (0.18 uses a v1 config).
+branch        head      client-go  discovery                   build lint suite      openshift->10000 plain->nil original live
+devel         3ef433a4  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+release-0.25  f463cc97  v0.36.4    ServerGroups (ctx wrapper)  ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+release-0.24  f63923ed  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
+release-0.23  458caa8e  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
+release-0.22  3dac6c7a  v0.34.11   ServerGroups                ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  nil
+release-0.21  f5984c14  v0.33.12   ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  -
+release-0.20  17109909  v0.32.13   ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  -
+release-0.19  22d18ae7  v0.31.7    ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  -
+release-0.18  36686f9a  v0.30.12   ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  nil
 
-# devel mutants, each of which the suite rejects:
-original code                   0 Passed | 3 Failed
-always query cluster A          1 Passed | 2 Failed
-fall back to 10000 on errors    2 Passed | 1 Failed
-netshoot ignores the helper     2 Passed | 1 Failed
+# Live was run once per code shape; 0.23/0.24 share 0.22's helper and 0.19-0.21 share 0.18's, byte for byte.
+# Each head is one signed commit directly on its up-to-date base branch; `git diff --check` is clean.
