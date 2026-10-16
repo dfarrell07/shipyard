@@ -34,3 +34,6 @@ release-0.18  1be2caad  v0.30.12   ServerGroups (interface{})  ok    0    3/3 ov
 # file (one 124-line test file instead of 165 lines in two); specs take Ginkgo's SpecContext; the failure case has its own
 # When/BeforeEach; the AwaitUntil message is skitt's suggested "discover API groups for nettest UID selection".
 # Re-verified: lint and vet clean, 20/20 -race runs, and the same seven mutants all fail the suite.
+# Fourth expert review of 5bc13ebf found no defect and no change with clear net value. CI: all 22 jobs pass except
+# Vulnerability Scanning (pre-existing x/net and x/crypto CVEs on devel). Shipyard's unit_test.sh runs 305 specs clean;
+# whole-repo golangci-lint matches origin/devel (0 issues); go mod tidy is clean; subctl devel builds and vets against it.
