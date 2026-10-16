@@ -51,7 +51,7 @@
       "nonroot-v2": "ccf6467b8917421c224c4d08cda991d3270e12da649ac01fc12105582d08c4d9"
     },
     "source": "admission-check.go.txt, copied to pkg/securitycontextconstraints/sccadmission/ and run with ACM_AUDIT_DIR containing the five policy YAMLs under scc/ and a copy of repro/",
-    "command": "GOWORK=off GOFLAGS=-mod=vendor go test -vet=off ./pkg/securitycontextconstraints/sccadmission -run TestACM48176Admission -v -count=1",
+    "command": "GOWORK=off go test -p 4 -mod=vendor -vet=off ./pkg/securitycontextconstraints/sccadmission -run TestACM48176Admission -v -count=1",
     "log": "admission-check.log",
     "requester": "system:serviceaccount:kube-system:replicaset-controller",
     "namespace_uid_range_fixture": "1001530000/10000"

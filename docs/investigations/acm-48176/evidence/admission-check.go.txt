@@ -65,7 +65,10 @@ func TestACM48176Admission(t *testing.T) {
 		}
 		sccs = append(sccs, scc)
 	}
-	type tc struct{ variant, grant string; authz audit3Authz }
+	type tc struct {
+		variant, grant string
+		authz          audit3Authz
+	}
 	cases := []tc{
 		{"original", "stock", audit3Authz{}},
 		{"corrected", "stock", audit3Authz{}},
@@ -99,6 +102,21 @@ func TestACM48176Admission(t *testing.T) {
 			err = plugin.(admission.MutationInterface).Admit(context.Background(), attrs, nil)
 			if err == nil {
 				err = plugin.(admission.ValidationInterface).Validate(context.Background(), attrs, nil)
+			}
+			expectedAccept := c.variant == "corrected" ||
+				c.authz.nonrootSubject == "system:serviceaccount:"+auditNS+":default" ||
+				c.authz.nonrootGroup == "system:serviceaccounts"
+			if (err == nil) != expectedAccept {
+				t.Errorf("%s/%s/%s: expected accepted=%v; err=%v", name, c.variant, c.grant, expectedAccept, err)
+			}
+			if err == nil && c.variant == "corrected" {
+				if pod.Annotations[securityv1.ValidatedSCCAnnotation] != "restricted-v2" {
+					t.Errorf("wrong SCC: %s", pod.Annotations[securityv1.ValidatedSCCAnnotation])
+				}
+				if pod.Spec.Containers[0].SecurityContext.RunAsUser == nil ||
+					*pod.Spec.Containers[0].SecurityContext.RunAsUser != 1001530000 {
+					t.Error("wrong default UID")
+				}
 			}
 			res := "ACCEPTED"
 			detail := ""
