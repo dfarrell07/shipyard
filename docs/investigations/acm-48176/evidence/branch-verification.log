@@ -8,7 +8,7 @@
 # Live: the real nettestRunAsUser against an OpenShift API server (discovery GET only; no objects or grants changed).
 
 branch        head      client-go  discovery                   build lint suite      openshift->10000 plain->nil original live
-devel         0fedebc0  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+devel         b7507442  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
 release-0.25  1efaac4d  v0.36.4    ServerGroups (ctx wrapper)  ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
 release-0.24  afba5989  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
 release-0.23  9bfd942f  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
@@ -24,3 +24,9 @@ release-0.18  1be2caad  v0.30.12   ServerGroups (interface{})  ok    0    3/3 ov
 # group check, the fake recording only runAsUser without a mutex) were re-verified on these heads, with 20 separate -race
 # runs per suite-carrying branch, including the wrong-cluster and netshoot-ignores-helper mutants on devel
 # (1 pass 2 fail; 2 pass 1 fail). Live and real-apiserver results were recorded before those trims; discovery is unchanged.
+# devel b7507442 (after a second expert review): the helper is called inline in both pod specs, its doc comment and
+# AwaitUntil message are shorter, and the commit message drops the AwaitUntil restatement. Re-verified: lint 0, 20/20
+# -race runs, and every mutant fails the suite (OpenShift->10000, plain->nil, always ClusterA, either builder ignoring the
+# helper, discovery error->10000, original code). A real kube-apiserver with a stale APIService, live OpenShift discovery,
+# all 45 Lighthouse call sites, a subctl devel build against this commit, and CI's unit-runner selection all check out.
+# The closed release branches predate this polish; backports start from the merged devel commit.
