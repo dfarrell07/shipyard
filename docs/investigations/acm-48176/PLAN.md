@@ -35,8 +35,7 @@ admission check admits.
 ## Landing
 
 The commits are per-branch ports, not cherry-picks of a merged `devel` commit, so all nine PRs are open together and linked.
-The original hardening went the same way (#2228–#2235). Merge `release-0.23`, `release-0.22`, and `release-0.24` first: their
-downstream releases are waiting on this fix. If review changes the code, apply the change to each variant.
+The original hardening went the same way (#2228–#2235). If review changes the code, apply the change to each variant.
 
 The `release-0.18`–`0.22` commits change only `deployments.go`. Their shared unit runner skips any test directory whose test files
 mention `e2e`, and the suite imports a `test/e2e` package, so CI there could never run it. Their PR bodies point to the `devel`
@@ -45,28 +44,28 @@ PR for the regression tests.
 The 0.18–0.21 branches carry the bug, but no Subctl built from them includes it: their Subctl branches pin pre-hardening
 Lighthouse. Fixing them now keeps the next tag clean; they are lower priority.
 
-## Delivering Subctl
+## Delivering the fix
 
-Only Subctl's code changes, and Subctl is not in the operator bundle. Recommended path: **ship 0.23.5**.
+Deployed Submariner is unaffected ([impact](README.md#impact)), so no release is held or respun for this. Each branch's next
+regular release picks up the fix.
 
-- Upstream v0.23.4 is already published with the bug, and a respin cannot replace it. The normal release gives Subctl
-  "Update Submariner dependencies to v0.23.5".
-- Downstream, retarget ACM-44527 to 0.23.5, as was done for 0.23.2 → 0.23.4.
-- A 0.23.4 respin is not a Subctl-only rebuild. Merging Lighthouse `release-0.23` triggers the unfiltered `lighthouse-agent-0-23`
-  and `lighthouse-coredns-0-23` push pipelines, so the latest snapshot no longer matches the staged bundle. A respin would need
-  either a hand-built snapshot (the staged digests plus the new Subctl) or a bundle SHA update with an FBC re-stage.
+- Downstream 0.23.4 (ACM-44527) ships as built, with the known-issue note. A respin would not be Subctl-only anyway: merging
+  Lighthouse `release-0.23` triggers the unfiltered `lighthouse-agent-0-23` and `lighthouse-coredns-0-23` push pipelines, so the
+  latest snapshot would no longer match the staged bundle.
+- Downstream 0.22.2 (ACM-45070) and 0.24.2 (ACM-47692) take the fix if it merges before their Subctl build, and otherwise ship
+  with the note.
 
-Downstream 0.22.2 (ACM-45070, in progress) and 0.24.2 (ACM-47692) pin affected Lighthouse tags. Hold them until Subctl
-`release-0.22` and `release-0.24` pick up the fix, and tell their release owners. No downstream production release contains
-the bug.
-
-QE should take Subctl from the rebuilt stage image by digest; `go version -m` on it should show the fixed Lighthouse version.
+**Optional QE check.** To get a service-discovery result for 0.23.4 without a rebuild, on disposable test clusters only, run
+`oc adm policy add-scc-to-group nonroot-v2 system:serviceaccounts` on both clusters, rerun `subctl verify --only
+service-discovery`, then undo it with `oc adm policy remove-scc-from-group nonroot-v2 system:serviceaccounts`. The admission
+check admits both original Deployments under that grant ([log](evidence/admission-check.log)). It is a test-cluster check, not a
+customer workaround.
 
 ## Follow-ups
 
 - **Known issue:** add a note to the GitHub release notes of upstream Subctl v0.22.2, v0.23.2, v0.23.4, v0.24.2, v0.25.0-rc1,
-  and v0.26.0-m0. The note: "`subctl verify --only service-discovery` fails on OpenShift. Upgrade Subctl; deployed Submariner is
-  unaffected."
+  and v0.26.0-m0, and to any downstream release that ships without the fix. The note: "`subctl verify --only
+  service-discovery` fails on OpenShift; deployed Submariner is unaffected. A later Subctl release fixes it."
 - **Shipyard #2618:** it still sets UID 10000 in `devel`'s CI YAMLs. It is unrelated to `subctl verify`; merge it separately.
 
 ## Pull requests

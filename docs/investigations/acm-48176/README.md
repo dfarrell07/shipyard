@@ -29,6 +29,15 @@ Running the real OpenShift admission code on the exact Deployments rejects the o
 Downstream QE never ran these builders on OpenShift before: 0.23.2 never reached downstream production, and 0.23.4 is the first QE run.
 The earlier fix attempt changed only Shipyard's CI YAML files, which `subctl verify` does not use.
 
+## Impact
+
+Deployed Submariner is unaffected. The builders are compiled only into Subctl and run only in `subctl verify`: the
+lighthouse-agent and coredns binaries do not link any Lighthouse `test/` package, and neither the operator nor the ACM addon uses
+them. The attached run's `subctl diagnose all` and connectivity tests pass.
+
+Users who run `subctl verify` against OpenShift with an affected Subctl get the same 14 false failures. Because every
+service-discovery case failed during setup, QE has no functional service-discovery result on OpenShift for 0.23.4.
+
 ## Fix
 
 For each target cluster, the builders query API discovery:
@@ -49,12 +58,14 @@ The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No 
 
 ## Next steps
 
-1. **Developer** marks the nine draft PRs ready and merges `release-0.23`, `release-0.22`, and `release-0.24` first ([plan](PLAN.md)).
-2. **Release owners** ship the fix in 0.23.5, and hold downstream 0.22.2 and 0.24.2 until they include it ([delivery](PLAN.md#delivering-subctl)).
-3. **QE** reruns its usual Submariner job with the rebuilt Subctl. All 14 cases should pass; that confirms the fix.
-4. **Developer** adds a known-issue note to the affected upstream Subctl releases.
+1. **Developer** marks the nine draft PRs ready and merges them ([plan](PLAN.md)).
+2. **Release owners** ship without waiting for the fix; each branch's next regular release picks it up
+   ([delivery](PLAN.md#delivering-the-fix)).
+3. **Developer** adds a known-issue note to the affected Subctl releases.
+4. **QE** (optional) gets a service-discovery result for 0.23.4 without a rebuild, using the
+   [`nonroot-v2` check](PLAN.md#delivering-the-fix) on disposable test clusters.
 
-If the cases still fail, `oc create` the [original Deployments](evidence/repro/original), with `NETTEST_IMAGE` replaced, in a
-namespace with the e2e framework's labels. Their ReplicaSets report the admission decision directly.
+If the cases still fail with that grant, `oc create` the [original Deployments](evidence/repro/original), with `NETTEST_IMAGE`
+replaced, in a namespace with the e2e framework's labels. Their ReplicaSets report the admission decision directly.
 
 The [evidence index](evidence/README.md) maps each claim to its supporting files.
