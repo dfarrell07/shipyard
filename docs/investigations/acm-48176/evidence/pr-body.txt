@@ -1,6 +1,6 @@
 devel (#2324):
 
-OpenShift's restricted-v2 SCC rejects UID 10000 on the netshoot and nginx-demo helper Deployments, leaving the service-discovery tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID. Keep 10000 elsewhere because older nettest images default to root.
+OpenShift's restricted-v2 SCC rejects the UID 10000 that #2228 set on the netshoot and nginx-demo helper Deployments, leaving the service-discovery tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID. Keep 10000 elsewhere because older nettest images default to root.
 
 The tests are in `test/unit/framework` because the unit runner skips `test/e2e`.
 

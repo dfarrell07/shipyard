@@ -11,7 +11,8 @@
 | Every branch builds, passes, catches mutants, fails on its original code, and classifies live OpenShift | [branch-verification.log](branch-verification.log) |
 | The PR descriptions | [pr-body.txt](pr-body.txt) |
 
-Shipyard first sets `USER 10000` in `Dockerfile.nettest` in v0.22.2, v0.23.3, and v0.24.2. Earlier images default to root.
+Shipyard first sets `USER 10000` in `Dockerfile.nettest` in v0.22.2, v0.23.3, v0.24.2, and v0.25.0-rc0. Earlier images default to
+root.
 
 ## Reproducing
 
