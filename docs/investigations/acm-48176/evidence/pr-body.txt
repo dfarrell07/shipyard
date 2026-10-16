@@ -1,24 +1,23 @@
 devel (#2324):
 
-OpenShift's restricted-v2 SCC rejects UID 10000 on the netshoot and nginx-demo helper Deployments, leaving the service-discovery
-tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID.
-Keep 10000 elsewhere because older nettest images default to root.
+OpenShift's restricted-v2 SCC rejects UID 10000 on the netshoot and nginx-demo helper Deployments, leaving the service-discovery tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID. Keep 10000 elsewhere because older nettest images default to root.
 
-Use client-go's `ServerGroupsWithContext` inside `AwaitUntil` for discovery, as requested in review.
+The tests are in `test/unit/framework` because the unit runner skips `test/e2e`.
 
-Validation: both builders on mixed OpenShift/plain Kubernetes fixtures and discovery failure before Deployment creation;
-the existing three-spec suite passes with race detection, and targeted Go lint passes. Tests remain in `test/unit/framework`
-because the unit runner skips `test/e2e`.
+Tracks [ACM-48176](https://redhat.atlassian.net/browse/ACM-48176).
 
-Tracks [ACM-48176](https://redhat.atlassian.net/browse/ACM-48176). Release PRs remain drafts pending devel approval.
-
-release-X.Y (#2325-#2332), one paragraph per line on GitHub:
+release-0.23 to release-0.25 (#2325-#2327):
 
 OpenShift's restricted-v2 SCC rejects UID 10000 on the netshoot and nginx-demo helper Deployments, leaving the service-discovery tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID. Keep 10000 elsewhere because older nettest images default to root.
 
-Backport of #2324. This branch's client-go (<version>) predates `ServerGroupsWithContext`, so discovery uses `ServerGroups()` inside `AwaitUntil`.
+Backport of #2324. This branch's client-go predates `ServerGroupsWithContext`, so discovery uses `ServerGroups()`.
 
-0.23-0.25: Includes #2324's regression tests in `test/unit/framework`: both builders on mixed OpenShift/plain Kubernetes fixtures, and discovery failure before Deployment creation. They pass with race detection.
-0.18-0.22: #2324's regression tests aren't included: this branch's unit runner skips test directories that reference `e2e`, and the tests must import `test/e2e/framework`. They pass locally against this branch.
+Tracks [ACM-48176](https://redhat.atlassian.net/browse/ACM-48176).
 
-Tracks [ACM-48176](https://redhat.atlassian.net/browse/ACM-48176). Draft until #2324 is approved.
+release-0.18 to release-0.22 (#2328-#2332):
+
+OpenShift's restricted-v2 SCC rejects UID 10000 on the netshoot and nginx-demo helper Deployments, leaving the service-discovery tests with no pods. Leave `runAsUser` unset on clusters serving `security.openshift.io` so SCC admission assigns an allowed UID. Keep 10000 elsewhere because older nettest images default to root.
+
+Backport of #2324. This branch's client-go predates `ServerGroupsWithContext`, so discovery uses `ServerGroups()`. #2324's tests aren't included because this branch's unit runner skips test directories that reference `e2e`.
+
+Tracks [ACM-48176](https://redhat.atlassian.net/browse/ACM-48176).

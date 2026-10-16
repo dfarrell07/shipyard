@@ -8,10 +8,10 @@
 # Live: the real nettestRunAsUser against an OpenShift API server (discovery GET only; no objects or grants changed).
 
 branch        head      client-go  discovery                   build lint suite      openshift->10000 plain->nil original live
-devel         3ef433a4  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
-release-0.25  f463cc97  v0.36.4    ServerGroups (ctx wrapper)  ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
-release-0.24  f63923ed  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
-release-0.23  458caa8e  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
+devel         0238f63d  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+release-0.25  cbadaf17  v0.36.4    ServerGroups (ctx wrapper)  ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+release-0.24  669e9c30  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
+release-0.23  2c4949ef  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
 release-0.22  3dac6c7a  v0.34.11   ServerGroups                ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  nil
 release-0.21  f5984c14  v0.33.12   ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  -
 release-0.20  17109909  v0.32.13   ServerGroups (interface{})  ok    0    3/3 overlay 1 pass 2 fail   1 pass 2 fail  0 pass 3 fail  -
@@ -20,3 +20,5 @@ release-0.18  36686f9a  v0.30.12   ServerGroups (interface{})  ok    0    3/3 ov
 
 # Live was run once per code shape; 0.23/0.24 share 0.22's helper and 0.19-0.21 share 0.18's, byte for byte.
 # Each head is one signed commit directly on its up-to-date base branch; `git diff --check` is clean.
+# The four suite-carrying heads were re-verified after dropping unneeded TypeMeta from the fake responses; their helpers,
+# and so the live and real-apiserver results (recorded on the previous heads), are byte-identical.
