@@ -8,7 +8,7 @@
 # Live: the real nettestRunAsUser against an OpenShift API server (discovery GET only; no objects or grants changed).
 
 branch        head      client-go  discovery                   build lint suite      openshift->10000 plain->nil original live
-devel         b7507442  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
+devel         5bc13ebf  v0.37.0    ServerGroupsWithContext     ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
 release-0.25  1efaac4d  v0.36.4    ServerGroups (ctx wrapper)  ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  nil
 release-0.24  afba5989  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
 release-0.23  9bfd942f  v0.35.8    ServerGroups                ok    0    3/3 pass   1 pass 2 fail    1 pass 2 fail  0 pass 3 fail  -
@@ -30,3 +30,7 @@ release-0.18  1be2caad  v0.30.12   ServerGroups (interface{})  ok    0    3/3 ov
 # helper, discovery error->10000, original code). A real kube-apiserver with a stale APIService, live OpenShift discovery,
 # all 45 Lighthouse call sites, a subctl devel build against this commit, and CI's unit-runner selection all check out.
 # The closed release branches predate this polish; backports start from the merged devel commit.
+# devel 5bc13ebf (third expert review): the test fake uses gomega's ghttp server and the suite function lives in the spec
+# file (one 124-line test file instead of 165 lines in two); specs take Ginkgo's SpecContext; the failure case has its own
+# When/BeforeEach; the AwaitUntil message is skitt's suggested "discover API groups for nettest UID selection".
+# Re-verified: lint and vet clean, 20/20 -race runs, and the same seven mutants all fail the suite.
