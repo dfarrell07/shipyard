@@ -3,4 +3,16 @@ ReplicaSet controller creates no pods and the service discovery tests fail with 
 unset on clusters that serve the `security.openshift.io` API group, so SCC admission assigns a UID from the namespace range,
 and keeps 10000 elsewhere for older nettest images that default to root. See the commit message for details.
 
+QE hit this on OpenShift with a 0.23.2 Subctl; the helper's ReplicaSet reported:
+
+```text
+reason: FailedCreate
+message: 'pods "netshootd4656-64cdf68d69-" is forbidden: unable to validate against any security context constraint:
+  [... provider restricted-v2: .containers[0].runAsUser: Invalid value: 10000: must be in the ranges:
+  [1001530000, 1001539999] ...]'
+```
+
 Tests are in `test/unit/framework`, because the unit runner skips `test/e2e`.
+
+Failing checks unrelated to this change: per branch, each named with a recent PR to the same branch that fails
+the same way.

@@ -26,6 +26,9 @@ its CI). The suite passes with `-race` and randomized order, and every spec fail
 it also rejects plausible wrong implementations: querying the wrong cluster, falling back to 10000 on errors, or a builder that
 ignores the helper ([log](evidence/branch-verification.log)).
 
+In the PRs' CI, E2E and unit jobs pass on all nine. Every other failing check fails the same way on a recent PR to the same
+branch, which each PR body names.
+
 Against a real kube-apiserver, as an unprivileged user, the helper returned 10000 on a plain server and nil once a
 `security.openshift.io` group was served (here via a CRD). It failed with `context deadline exceeded` under a zero timeout
 ([devel](evidence/real-apiserver-devel.log), [0.23](evidence/real-apiserver-0.23.log)). On `release-0.23`, `runAsUser` is the
@@ -48,6 +51,8 @@ Lighthouse. Fixing them now keeps the next tag clean; they are lower priority.
 
 Deployed Submariner is unaffected ([impact](README.md#impact)), so no release is held or respun for this. Each branch's next
 regular release picks up the fix.
+
+Merging alone ships nothing: delivery needs a Lighthouse tag with the fix, a Subctl bump to that tag, and a fresh Subctl build.
 
 - Downstream 0.23.4 (ACM-44527) ships as built, with the known-issue note. A respin would not be Subctl-only anyway: merging
   Lighthouse `release-0.23` triggers the unfiltered `lighthouse-agent-0-23` and `lighthouse-coredns-0-23` push pipelines, so the

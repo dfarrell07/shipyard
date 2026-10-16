@@ -25,8 +25,8 @@
 
 ## Limits
 
-- Nothing has run on an OpenShift cluster yet. The admission check uses fixture grants and namespace allocation; QE's rerun
-  supplies the live result.
+- None of these checks ran on an OpenShift cluster. The admission check uses fixture grants and namespace allocation;
+  ACM-44539's `FailedCreate` is the live rejection, and QE's run with a fixed Subctl supplies the live result.
 - 4.19 has no restricted-v3. An earlier run with 4.19's policy set gave the same restricted-v2 results.
 - Custom SCCs, restricted-v3-only policies, and restricted Pod Security namespaces are not covered.
 
