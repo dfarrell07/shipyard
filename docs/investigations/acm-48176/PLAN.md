@@ -34,8 +34,10 @@ shape returned a nil UID against a live OpenShift API server ([log](evidence/bra
 
 ## Landing
 
-skitt asked for `devel` approval before backports. All nine stay drafts: mark `#2324` ready, get it approved and merged, then
-mark the backports ready. If review changes the code, apply the change to each variant.
+skitt asked for `devel` approval before backports, as the [backport process](https://submariner.io/development/backports/)
+requires, so #2325–#2332 are closed. Mark #2324 ready and get it approved and merged. Then run
+`make LOCAL_BUILD=1 backport release=<branch> pr=<n>` for each branch, chaining from the previous backport where the code
+differs, and resolve each cherry-pick to match the `nettest-scc-uid-<branch>` branch, rebased onto any later review changes.
 
 The 0.18–0.21 branches carry the bug, but no Subctl built from them includes it: their Subctl branches pin pre-hardening
 Lighthouse. Fixing them keeps the next tag clean; they are lower priority.
@@ -67,7 +69,8 @@ and does not validate a fixed Subctl.
 
 ## Pull requests
 
-All drafts, each from `dfarrell07:nettest-scc-uid-<branch>`; their bodies follow [pr-body.txt](evidence/pr-body.txt):
+Each from `dfarrell07:nettest-scc-uid-<branch>`; their bodies follow [pr-body.txt](evidence/pr-body.txt). #2324 is a draft;
+the others are closed until it merges, and their branches remain the reference resolution for each backport:
 
 | Branch | PR | Branch | PR |
 | --- | --- | --- | --- |

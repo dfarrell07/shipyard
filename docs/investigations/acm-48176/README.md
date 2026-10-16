@@ -1,7 +1,7 @@
 # ACM-48176: nettest helper pods rejected on OpenShift
 
-**Status:** diagnosed; draft Lighthouse PRs [#2324](https://github.com/submariner-io/lighthouse/pull/2324)–[#2332](https://github.com/submariner-io/lighthouse/pull/2332)
-are open for all nine branches and updated for skitt's review. Backports wait for `devel` approval.
+**Status:** diagnosed; the `devel` fix is in draft Lighthouse PR [#2324](https://github.com/submariner-io/lighthouse/pull/2324),
+updated for skitt's review. The release-branch PRs (#2325–#2332) are closed until it merges.
 ACM-48194 tracks the known-issue note.
 
 ## What fails
@@ -63,7 +63,7 @@ The builders are compiled into Subctl, so the fix ships as a rebuilt Subctl. No 
 ## Next steps
 
 1. **Developer** marks [#2324](https://github.com/submariner-io/lighthouse/pull/2324) ready, gets it approved and merged, then
-   marks the backports ready ([plan](PLAN.md#landing)).
+   opens the backports ([plan](PLAN.md#landing)).
 2. **Release owners** pick up the fix through a Lighthouse tag, Subctl bump, and fresh Subctl build in each branch's next
    regular release ([delivery](PLAN.md#delivering-the-fix)).
 3. **QE** runs `subctl verify --only service-discovery` with that Subctl on OpenShift to verify the fix and close ACM-48176.
